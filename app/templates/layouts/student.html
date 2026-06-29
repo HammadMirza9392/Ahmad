@@ -1,0 +1,154 @@
+{% extends "layouts/base.html" %}
+
+{% block body %}
+<!-- Sidebar Overlay (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        {% if institution and institution.logo %}
+        <img src="{{ institution.logo }}" alt="Logo">
+        {% else %}
+        <div class="avatar" style="width:38px;height:38px;border-radius:8px;background:linear-gradient(135deg,#667eea,#764ba2);">
+            <i class="bi bi-mortarboard-fill"></i>
+        </div>
+        {% endif %}
+        <h5>{{ institution.name if institution else 'LMS' }}</h5>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="sidebar-section">Menu</div>
+        <div class="nav-item">
+            <a href="{{ url_for('student.dashboard') }}" class="nav-link {% if request.endpoint == 'student.dashboard' %}active{% endif %}">
+                <i class="bi bi-grid-1x2-fill"></i> Dashboard
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('student.chat') }}" class="nav-link {% if 'chat' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-chat-dots-fill"></i> AI Chat
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('student.subjects') }}" class="nav-link {% if 'subject' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-book-half"></i> My Subjects
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('student.quiz') }}" class="nav-link {% if 'quiz' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-patch-question"></i> Quiz
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('student.flashcards') }}" class="nav-link {% if 'flashcard' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-card-heading"></i> Flashcards
+            </a>
+        </div>
+
+        <div class="sidebar-section">Resources</div>
+        <div class="nav-item">
+            <a href="{{ url_for('student.downloads') }}" class="nav-link {% if 'download' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-cloud-download"></i> Downloads
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('student.notes') }}" class="nav-link {% if 'note' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-journal-text"></i> Notes
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('student.assignments') }}" class="nav-link {% if 'assignment' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-clipboard-check"></i> Assignments
+            </a>
+        </div>
+
+        <div class="sidebar-section">Account</div>
+        <div class="nav-item">
+            <a href="{{ url_for('student.notifications') }}" class="nav-link {% if 'notification' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-bell"></i> Notifications
+                {% if unread_count is defined and unread_count > 0 %}
+                <span class="badge bg-danger ms-auto">{{ unread_count }}</span>
+                {% endif %}
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('student.profile') }}" class="nav-link {% if 'profile' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-person"></i> Profile
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('auth.logout') }}" class="nav-link">
+                <i class="bi bi-box-arrow-left"></i> Logout
+            </a>
+        </div>
+    </nav>
+</aside>
+
+<!-- Main Content -->
+<div class="main-content">
+    <!-- Topbar -->
+    <header class="topbar">
+        <div class="d-flex align-items-center gap-3">
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="bi bi-list"></i>
+            </button>
+            <h6 class="mb-0 fw-bold d-none d-md-block">{% block page_title %}Dashboard{% endblock %}</h6>
+        </div>
+        <div class="topbar-actions">
+            <button class="btn-icon" id="themeToggle" title="Toggle Dark Mode">
+                <i class="bi bi-moon"></i>
+            </button>
+            <a href="{{ url_for('student.notifications') }}" class="btn-icon" title="Notifications">
+                <i class="bi bi-bell"></i>
+                {% if unread_count is defined and unread_count > 0 %}
+                <span class="notification-badge">{{ unread_count }}</span>
+                {% endif %}
+            </a>
+            <div class="dropdown">
+                <button class="btn-icon dropdown-toggle" data-bs-toggle="dropdown" style="border:none;">
+                    <div class="avatar">{{ current_user.full_name[0] if current_user.is_authenticated else 'S' }}</div>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><span class="dropdown-item-text fw-bold">{{ current_user.full_name if current_user.is_authenticated else 'Student' }}</span></li>
+                    <li><small class="dropdown-item-text text-muted">{{ current_user.email if current_user.is_authenticated else '' }}</small></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{{ url_for('student.profile') }}"><i class="bi bi-person me-2"></i>Profile</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('auth.change_password') }}"><i class="bi bi-key me-2"></i>Change Password</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-left me-2"></i>Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="page-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('sidebarToggle')?.addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('show');
+    document.getElementById('sidebarOverlay').classList.toggle('show');
+});
+document.getElementById('sidebarOverlay')?.addEventListener('click', () => {
+    document.getElementById('sidebar').classList.remove('show');
+    document.getElementById('sidebarOverlay').classList.remove('show');
+});
+</script>
+{{ super() }}
+{% endblock %}

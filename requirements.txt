@@ -1,0 +1,43 @@
+# =============================================================================
+# AI Powered College & University LMS - Dependencies
+# =============================================================================
+
+# Flask Core
+Flask==3.1.1
+Flask-Login==0.6.3
+Flask-WTF==1.2.2
+Flask-Mail==0.10.0
+Flask-Limiter==3.12
+
+# Database
+Flask-SQLAlchemy==3.1.1
+psycopg[binary]>=3.1
+SQLAlchemy==2.0.41
+
+# Security
+cryptography>=44.0
+bcrypt>=4.2
+python-dotenv>=1.0
+
+# AI Provider SDKs
+google-generativeai>=0.8
+groq>=0.25
+openai>=1.50
+huggingface-hub>=0.25
+requests>=2.31
+
+# File Processing
+PyPDF2>=3.0
+python-docx>=1.1
+openpyxl>=3.1
+Pillow>=11.0
+
+# Utilities
+Markdown>=3.5
+bleach>=6.1
+Werkzeug>=3.1
+Jinja2>=3.1
+markupsafe>=2.1
+
+# Production Server
+gunicorn>=22.0

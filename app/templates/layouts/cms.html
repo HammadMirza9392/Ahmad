@@ -1,0 +1,505 @@
+{% extends "layouts/base.html" %}
+
+{% block body %}
+<!-- Public Website Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('cms.home') }}">
+            {% if institution and institution.logo %}
+            <img src="{{ institution.logo }}" alt="Logo" style="height:40px;border-radius:8px;">
+            {% endif %}
+            <span class="fw-bold" style="font-size:1rem;">{{ institution.name if institution else 'LMS' }}</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#publicNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="publicNav">
+            <ul class="navbar-nav ms-auto">
+                {% set menu_pages = [] %}
+                {% if cms_menu is defined and cms_menu %}
+                    {% for page in cms_menu %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('cms.page', slug=page.slug) }}">{{ page.title }}</a>
+                    </li>
+                    {% endfor %}
+                {% else %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('cms.home') }}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('cms.page', slug='about') }}">About</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('cms.page', slug='departments') }}">Departments</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('cms.page', slug='admission') }}">Admission</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('cms.page', slug='downloads') }}">Downloads</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('cms.page', slug='gallery') }}">Gallery</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('cms.page', slug='news') }}">News</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('cms.page', slug='contact') }}">Contact</a></li>
+                {% endif %}
+            </ul>
+            <div class="ms-lg-3">
+                {% if current_user.is_authenticated %}
+                    {% if current_user.is_admin() %}
+                    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-primary btn-sm">Admin Panel</a>
+                    {% else %}
+                    <a href="{{ url_for('student.dashboard') }}" class="btn btn-primary btn-sm">Student Portal</a>
+                    {% endif %}
+                {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-sm">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Page Content -->
+{% block content %}{% endblock %}
+
+<!-- Footer -->
+<footer class="bg-dark text-white pt-5 pb-3">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <h5 class="fw-bold mb-3">{{ institution.name if institution else 'LMS' }}</h5>
+                <p class="text-white-50 small">{{ institution.about[:200] + '...' if institution and institution.about and institution.about|length > 200 else (institution.about if institution and institution.about else '') }}</p>
+                {% if institution %}
+                <div class="d-flex gap-2 mt-3">
+                    {% if institution.facebook %}<a href="{{ institution.facebook }}" class="btn btn-sm btn-outline-light rounded-circle"><i class="bi bi-facebook"></i></a>{% endif %}
+                    {% if institution.twitter %}<a href="{{ institution.twitter }}" class="btn btn-sm btn-outline-light rounded-circle"><i class="bi bi-twitter-x"></i></a>{% endif %}
+                    {% if institution.instagram %}<a href="{{ institution.instagram }}" class="btn btn-sm btn-outline-light rounded-circle"><i class="bi bi-instagram"></i></a>{% endif %}
+                    {% if institution.youtube %}<a href="{{ institution.youtube }}" class="btn btn-sm btn-outline-light rounded-circle"><i class="bi bi-youtube"></i></a>{% endif %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-lg-2 col-6">
+                <h6 class="fw-bold mb-3">Quick Links</h6>
+                <ul class="list-unstyled small">
+                    <li class="mb-2"><a href="{{ url_for('cms.home') }}" class="text-white-50 text-decoration-none">Home</a></li>
+                    <li class="mb-2"><a href="{{ url_for('cms.page', slug='about') }}" class="text-white-50 text-decoration-none">About Us</a></li>
+                    <li class="mb-2"><a href="{{ url_for('cms.page', slug='departments') }}" class="text-white-50 text-decoration-none">Departments</a></li>
+                    <li class="mb-2"><a href="{{ url_for('cms.page', slug='contact') }}" class="text-white-50 text-decoration-none">Contact</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-2 col-6">
+                <h6 class="fw-bold mb-3">Academics</h6>
+                <ul class="list-unstyled small">
+                    <li class="mb-2"><a href="{{ url_for('cms.page', slug='admission') }}" class="text-white-50 text-decoration-none">Admission</a></li>
+                    <li class="mb-2"><a href="{{ url_for('cms.page', slug='downloads') }}" class="text-white-50 text-decoration-none">Downloads</a></li>
+                    <li class="mb-2"><a href="{{ url_for('cms.page', slug='faq') }}" class="text-white-50 text-decoration-none">FAQ</a></li>
+                    <li class="mb-2"><a href="{{ url_for('auth.login') }}" class="text-white-50 text-decoration-none">Student Portal</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-4">
+                <h6 class="fw-bold mb-3">Contact Us</h6>
+                {% if institution %}
+                <ul class="list-unstyled small text-white-50">
+                    {% if institution.address %}<li class="mb-2"><i class="bi bi-geo-alt me-2"></i>{{ institution.address }}</li>{% endif %}
+                    {% if institution.phone %}<li class="mb-2"><i class="bi bi-telephone me-2"></i>{{ institution.phone }}</li>{% endif %}
+                    {% if institution.email %}<li class="mb-2"><i class="bi bi-envelope me-2"></i>{{ institution.email }}</li>{% endif %}
+                    {% if institution.office_timing %}<li class="mb-2"><i class="bi bi-clock me-2"></i>{{ institution.office_timing }}</li>{% endif %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+        <hr class="my-4 border-secondary">
+        <div class="d-flex flex-wrap justify-content-between align-items-center">
+            <p class="small text-white-50 mb-0">&copy; {{ now().year if now is defined else '2026' }} {{ institution.name if institution else 'LMS' }}. All rights reserved.</p>
+            <div class="small">
+                <a href="{{ url_for('cms.page', slug='privacy-policy') }}" class="text-white-50 text-decoration-none me-3">Privacy Policy</a>
+                <a href="{{ url_for('cms.page', slug='terms') }}" class="text-white-50 text-decoration-none">Terms</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- AI Chatbot Widget -->
+<div class="chatbot-fab" id="chatbotFab">
+    <!-- Pulse ring -->
+    <div style="position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(26,86,219,0.3);animation:chatPulse 2s infinite;"></div>
+    <button class="fab-btn" id="chatbotToggle" title="Chat with AI Assistant">
+        <i class="bi bi-chat-dots-fill" id="fabIconOpen"></i>
+        <i class="bi bi-x-lg d-none" id="fabIconClose"></i>
+    </button>
+</div>
+
+<div class="chatbot-window" id="chatbotWindow">
+    <!-- Header -->
+    <div class="chatbot-header">
+        <div class="d-flex align-items-center gap-2">
+            <div style="width:32px;height:32px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                <i class="bi bi-robot"></i>
+            </div>
+            <div>
+                <div class="fw-bold" style="font-size:0.9rem;line-height:1.2;">AI Assistant</div>
+                <div style="font-size:0.65rem;opacity:0.7;" id="chatStatus">
+                    <span class="d-inline-block rounded-circle me-1" style="width:6px;height:6px;background:#4ade80;"></span>Online
+                </div>
+            </div>
+        </div>
+        <div class="d-flex gap-1">
+            <button class="chatbot-hdr-btn" onclick="clearChat()" title="Clear chat"><i class="bi bi-trash3"></i></button>
+            <button class="chatbot-hdr-btn" onclick="speakLastResponse()" title="Read aloud"><i class="bi bi-volume-up"></i></button>
+            <button class="chatbot-hdr-btn" onclick="toggleChatbot()" title="Close"><i class="bi bi-x-lg"></i></button>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="chatbot-messages" id="chatbotMessages">
+        <!-- Welcome -->
+        <div class="cb-welcome">
+            <div style="width:50px;height:50px;background:linear-gradient(135deg,#1a56db,#7c3aed);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+                <i class="bi bi-robot text-white" style="font-size:1.3rem;"></i>
+            </div>
+            <h6 class="fw-bold mb-1">Hi there! 👋</h6>
+            <p class="small text-muted mb-3">
+                {% if current_user.is_authenticated %}
+                I can help you with your studies, assignments, and course material.
+                {% else %}
+                Ask me anything about {{ institution.name if institution else 'the college' }}.
+                {% endif %}
+            </p>
+            <div class="cb-suggestions">
+                {% if current_user.is_authenticated %}
+                <button class="cb-suggestion" onclick="askQuestion(this)">What's the paper pattern?</button>
+                <button class="cb-suggestion" onclick="askQuestion(this)">Explain types of networks</button>
+                <button class="cb-suggestion" onclick="askQuestion(this)">College attendance policy</button>
+                {% else %}
+                <button class="cb-suggestion" onclick="askQuestion(this)">What programs are offered?</button>
+                <button class="cb-suggestion" onclick="askQuestion(this)">Admission requirements</button>
+                <button class="cb-suggestion" onclick="askQuestion(this)">Contact information</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Input -->
+    <div class="chatbot-input">
+        <div class="cb-input-row">
+            <button class="cb-mic-btn" id="micBtn" onclick="toggleMic()" title="Voice input">
+                <i class="bi bi-mic" id="micIcon"></i>
+            </button>
+            <input type="text" id="chatbotInput" placeholder="Type a message..." autocomplete="off">
+            <button class="cb-send-btn" id="sendBtn" onclick="sendChatbotMessage()" title="Send">
+                <i class="bi bi-send-fill"></i>
+            </button>
+        </div>
+        <div class="cb-mic-status d-none" id="micStatus">
+            <div class="cb-mic-wave"></div>
+            <span class="small">Listening...</span>
+            <button class="btn btn-sm btn-link text-danger p-0 ms-2" onclick="stopMic()">Stop</button>
+        </div>
+        <div class="cb-footer">
+            <span>Powered by AI</span>
+            {% if not current_user.is_authenticated %}
+            <a href="{{ url_for('auth.login') }}">Login for more</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* Chatbot complete styles */
+@keyframes chatPulse { 0%,100%{transform:scale(1);opacity:0.5} 50%{transform:scale(1.15);opacity:0} }
+@keyframes typingDot { 0%,60%,100%{opacity:0.3;transform:translateY(0)} 30%{opacity:1;transform:translateY(-4px)} }
+@keyframes micPulse { 0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,0.4)} 50%{box-shadow:0 0 0 8px rgba(220,38,38,0)} }
+
+.chatbot-fab { position:fixed;bottom:24px;right:24px;z-index:9999; }
+.chatbot-fab .fab-btn {
+    width:56px;height:56px;border-radius:50%;
+    background:linear-gradient(135deg,#1a56db,#7c3aed);
+    color:#fff;border:none;font-size:1.4rem;cursor:pointer;
+    box-shadow:0 4px 20px rgba(26,86,219,0.4);
+    display:flex;align-items:center;justify-content:center;
+    transition:all 0.3s ease;position:relative;z-index:2;
+}
+.chatbot-fab .fab-btn:hover { transform:scale(1.08); }
+
+.chatbot-window {
+    position:fixed;bottom:90px;right:24px;width:390px;height:560px;
+    background:#fff;border-radius:20px;
+    box-shadow:0 12px 48px rgba(0,0,0,0.18);
+    z-index:9998;display:none;flex-direction:column;overflow:hidden;
+    border:1px solid rgba(0,0,0,0.06);
+}
+.chatbot-window.open { display:flex;animation:fadeIn 0.3s ease; }
+
+.chatbot-header {
+    background:linear-gradient(135deg,#1a56db,#7c3aed);
+    color:#fff;padding:14px 16px;
+    display:flex;align-items:center;justify-content:space-between;
+    border-bottom:none;
+}
+.chatbot-hdr-btn {
+    background:rgba(255,255,255,0.15);border:none;color:#fff;
+    width:30px;height:30px;border-radius:50%;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:0.8rem;transition:all 0.2s;
+}
+.chatbot-hdr-btn:hover { background:rgba(255,255,255,0.3); }
+
+.chatbot-messages {
+    flex:1;overflow-y:auto;padding:16px;
+    background:#f8fafc;
+    scroll-behavior:smooth;
+}
+
+/* Welcome card */
+.cb-welcome { text-align:center;padding:20px 10px; }
+.cb-suggestions { display:flex;flex-wrap:wrap;gap:6px;justify-content:center; }
+.cb-suggestion {
+    background:#fff;border:1px solid #e2e8f0;border-radius:20px;
+    padding:6px 14px;font-size:0.75rem;color:#475569;cursor:pointer;
+    transition:all 0.2s;
+}
+.cb-suggestion:hover { background:#1a56db;color:#fff;border-color:#1a56db; }
+
+/* Messages */
+.chatbot-msg { margin-bottom:12px;display:flex;align-items:flex-end;gap:6px; }
+.chatbot-msg.user { justify-content:flex-end; }
+.chatbot-msg .cb-avatar {
+    width:26px;height:26px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:0.65rem;
+}
+.chatbot-msg.assistant .cb-avatar { background:linear-gradient(135deg,#1a56db,#7c3aed);color:#fff; }
+.chatbot-msg .bubble {
+    max-width:80%;padding:10px 14px;font-size:0.82rem;line-height:1.55;
+    word-wrap:break-word;white-space:pre-wrap;
+}
+.chatbot-msg.user .bubble {
+    background:linear-gradient(135deg,#1a56db,#2563eb);color:#fff;
+    border-radius:16px 16px 4px 16px;
+}
+.chatbot-msg.assistant .bubble {
+    background:#fff;color:#1e293b;border:1px solid #e8ecf0;
+    border-radius:16px 16px 16px 4px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.04);
+}
+.chatbot-msg .bubble code { background:rgba(0,0,0,0.06);padding:1px 4px;border-radius:3px;font-size:0.78rem; }
+.chatbot-msg .bubble strong { font-weight:700; }
+
+/* Typing dots */
+.cb-typing { display:flex;gap:4px;padding:4px 0; }
+.cb-typing span {
+    width:7px;height:7px;background:#94a3b8;border-radius:50%;
+    animation:typingDot 1.4s infinite;
+}
+.cb-typing span:nth-child(2) { animation-delay:0.2s; }
+.cb-typing span:nth-child(3) { animation-delay:0.4s; }
+
+/* Input area */
+.chatbot-input { padding:12px;border-top:1px solid #e8ecf0;background:#fff; }
+.cb-input-row { display:flex;align-items:center;gap:8px;background:#f1f5f9;border-radius:24px;padding:4px 4px 4px 8px; }
+.cb-input-row input {
+    flex:1;border:none;background:transparent;padding:8px;
+    font-size:0.82rem;outline:none;color:#1e293b;
+}
+.cb-input-row input::placeholder { color:#94a3b8; }
+.cb-mic-btn {
+    width:34px;height:34px;border-radius:50%;border:none;
+    background:transparent;color:#64748b;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:all 0.2s;font-size:0.95rem;flex-shrink:0;
+}
+.cb-mic-btn:hover { color:#1a56db; }
+.cb-mic-btn.recording { color:#dc2626;animation:micPulse 1.5s infinite;background:rgba(220,38,38,0.08); }
+.cb-send-btn {
+    width:34px;height:34px;border-radius:50%;border:none;
+    background:linear-gradient(135deg,#1a56db,#7c3aed);color:#fff;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:all 0.2s;font-size:0.85rem;flex-shrink:0;
+}
+.cb-send-btn:hover { transform:scale(1.08); }
+.cb-send-btn:disabled { opacity:0.5;cursor:not-allowed;transform:none; }
+
+.cb-mic-status {
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    padding:6px;color:#dc2626;font-size:0.75rem;
+}
+.cb-mic-wave {
+    width:16px;height:16px;border-radius:50%;background:#dc2626;
+    animation:micPulse 1s infinite;
+}
+
+.cb-footer {
+    display:flex;justify-content:space-between;align-items:center;
+    padding:6px 4px 0;font-size:0.65rem;color:#94a3b8;
+}
+.cb-footer a { color:#1a56db;text-decoration:none;font-weight:600; }
+
+@media (max-width:480px) {
+    .chatbot-window { width:calc(100vw - 16px);right:8px;bottom:80px;height:70vh; }
+}
+</style>
+
+<script>
+// ── Chatbot Controller ──
+let chatSending = false;
+let lastAssistantText = '';
+
+function toggleChatbot() {
+    const win = document.getElementById('chatbotWindow');
+    const iconOpen = document.getElementById('fabIconOpen');
+    const iconClose = document.getElementById('fabIconClose');
+    win.classList.toggle('open');
+    iconOpen.classList.toggle('d-none');
+    iconClose.classList.toggle('d-none');
+    if (win.classList.contains('open')) document.getElementById('chatbotInput').focus();
+}
+document.getElementById('chatbotToggle').addEventListener('click', toggleChatbot);
+
+// Enter to send
+document.getElementById('chatbotInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatbotMessage(); }
+});
+
+function askQuestion(btn) {
+    document.getElementById('chatbotInput').value = btn.textContent;
+    sendChatbotMessage();
+}
+
+function sendChatbotMessage() {
+    const input = document.getElementById('chatbotInput');
+    const msg = input.value.trim();
+    if (!msg || chatSending) return;
+    input.value = '';
+    chatSending = true;
+
+    const msgArea = document.getElementById('chatbotMessages');
+    // Hide welcome
+    const welcome = msgArea.querySelector('.cb-welcome');
+    if (welcome) welcome.remove();
+
+    // User bubble
+    msgArea.innerHTML += `<div class="chatbot-msg user"><div class="bubble">${escapeHtml(msg)}</div></div>`;
+
+    // Typing indicator
+    const tid = 'typing-' + Date.now();
+    msgArea.innerHTML += `<div class="chatbot-msg assistant" id="${tid}">
+        <div class="cb-avatar"><i class="bi bi-robot"></i></div>
+        <div class="bubble"><div class="cb-typing"><span></span><span></span><span></span></div></div>
+    </div>`;
+    msgArea.scrollTop = msgArea.scrollHeight;
+    document.getElementById('sendBtn').disabled = true;
+    document.getElementById('chatStatus').innerHTML = '<span class="d-inline-block rounded-circle me-1" style="width:6px;height:6px;background:#fbbf24;"></span>Thinking...';
+
+    fetch('/api/public-chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({message: msg})
+    })
+    .then(r => r.json())
+    .then(data => {
+        const el = document.getElementById(tid);
+        const responseText = data.response || 'Sorry, something went wrong.';
+        lastAssistantText = responseText;
+        if (el) {
+            const formatted = formatResponse(responseText);
+            el.querySelector('.bubble').innerHTML = formatted;
+        }
+        msgArea.scrollTop = msgArea.scrollHeight;
+    })
+    .catch(() => {
+        const el = document.getElementById(tid);
+        if (el) el.querySelector('.bubble').innerHTML = 'Network error. Please try again.';
+    })
+    .finally(() => {
+        chatSending = false;
+        document.getElementById('sendBtn').disabled = false;
+        document.getElementById('chatStatus').innerHTML = '<span class="d-inline-block rounded-circle me-1" style="width:6px;height:6px;background:#4ade80;"></span>Online';
+    });
+}
+
+function formatResponse(text) {
+    // Basic markdown: bold, code, line breaks
+    return text
+        .replace(/```([\s\S]*?)```/g, '<pre style="background:#f1f5f9;padding:8px;border-radius:6px;font-size:0.75rem;overflow-x:auto;margin:6px 0;">$1</pre>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+        .replace(/^### (.+)$/gm, '<strong style="font-size:0.85rem;">$1</strong>')
+        .replace(/^## (.+)$/gm, '<strong style="font-size:0.9rem;">$1</strong>')
+        .replace(/^- (.+)$/gm, '• $1')
+        .replace(/\n/g, '<br>');
+}
+
+function clearChat() {
+    const msgArea = document.getElementById('chatbotMessages');
+    msgArea.innerHTML = `<div class="cb-welcome">
+        <div style="width:50px;height:50px;background:linear-gradient(135deg,#1a56db,#7c3aed);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+            <i class="bi bi-robot text-white" style="font-size:1.3rem;"></i>
+        </div>
+        <h6 class="fw-bold mb-1">Chat cleared</h6>
+        <p class="small text-muted">How can I help you?</p>
+    </div>`;
+}
+
+function escapeHtml(text) {
+    const d = document.createElement('div');
+    d.textContent = text;
+    return d.innerHTML;
+}
+
+// ── Text-to-Speech ──
+function speakLastResponse() {
+    if (!lastAssistantText) return;
+    if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        return;
+    }
+    const utterance = new SpeechSynthesisUtterance(lastAssistantText.replace(/[#*`_]/g, ''));
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+    utterance.lang = 'en-US';
+    window.speechSynthesis.speak(utterance);
+}
+
+// ── Speech-to-Text ──
+let recognition = null;
+let isRecording = false;
+
+function toggleMic() {
+    if (isRecording) { stopMic(); return; }
+
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert('Speech recognition is not supported in your browser. Please use Chrome.');
+        return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    recognition.onstart = () => {
+        isRecording = true;
+        document.getElementById('micBtn').classList.add('recording');
+        document.getElementById('micIcon').className = 'bi bi-mic-fill';
+        document.getElementById('micStatus').classList.remove('d-none');
+    };
+
+    recognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            transcript += event.results[i][0].transcript;
+        }
+        document.getElementById('chatbotInput').value = transcript;
+    };
+
+    recognition.onerror = () => { stopMic(); };
+
+    recognition.onend = () => {
+        stopMic();
+        // Auto-send if there's text
+        const input = document.getElementById('chatbotInput');
+        if (input.value.trim()) sendChatbotMessage();
+    };
+
+    recognition.start();
+}
+
+function stopMic() {
+    isRecording = false;
+    if (recognition) { try { recognition.stop(); } catch(e) {} }
+    document.getElementById('micBtn').classList.remove('recording');
+    document.getElementById('micIcon').className = 'bi bi-mic';
+    document.getElementById('micStatus').classList.add('d-none');
+}
+</script>
+{% endblock %}

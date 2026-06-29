@@ -1,0 +1,150 @@
+{% extends "layouts/admin.html" %}
+
+{% block title %}Edit Page - {{ page.title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-pencil-square me-2"></i>Edit Page</h1>
+    <a href="{{ url_for('admin.cms_pages') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Pages
+    </a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<form method="POST" action="{{ url_for('admin.cms_edit', page_id=page.id) }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Page Content</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" name="title" value="{{ page.title }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="slug" class="form-label">Slug <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text">/</span>
+                            <input type="text" class="form-control" id="slug" name="slug" value="{{ page.slug }}" required>
+                        </div>
+                        <div class="form-text">URL-friendly version of the title. Use lowercase letters, numbers, and hyphens only.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="content" name="content" rows="12">{{ page.content or '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEO Settings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="bi bi-search me-2"></i>SEO Settings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="meta_title" class="form-label">Meta Title</label>
+                        <input type="text" class="form-control" id="meta_title" name="meta_title" value="{{ page.meta_title or '' }}" maxlength="70">
+                        <div class="form-text">Recommended: 50-60 characters.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="meta_description" class="form-label">Meta Description</label>
+                        <textarea class="form-control" id="meta_description" name="meta_description" rows="3" maxlength="160">{{ page.meta_description or '' }}</textarea>
+                        <div class="form-text">Recommended: 150-160 characters.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Publish Settings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="bi bi-gear me-2"></i>Settings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="page_type" class="form-label">Page Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="page_type" name="page_type" required>
+                            <option value="home" {% if page.page_type == 'home' %}selected{% endif %}>Home</option>
+                            <option value="about" {% if page.page_type == 'about' %}selected{% endif %}>About</option>
+                            <option value="contact" {% if page.page_type == 'contact' %}selected{% endif %}>Contact</option>
+                            <option value="department" {% if page.page_type == 'department' %}selected{% endif %}>Department</option>
+                            <option value="admission" {% if page.page_type == 'admission' %}selected{% endif %}>Admission</option>
+                            <option value="custom" {% if page.page_type == 'custom' %}selected{% endif %}>Custom</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="menu_order" class="form-label">Menu Order</label>
+                        <input type="number" class="form-control" id="menu_order" name="menu_order" value="{{ page.menu_order or 0 }}" min="0">
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="is_published" name="is_published" value="1" {% if page.is_published %}checked{% endif %}>
+                        <label class="form-check-label" for="is_published">Published</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="show_in_menu" name="show_in_menu" value="1" {% if page.show_in_menu %}checked{% endif %}>
+                        <label class="form-check-label" for="show_in_menu">Show in Menu</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Banner Image -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="bi bi-image me-2"></i>Banner Image</h5>
+                </div>
+                <div class="card-body">
+                    {% if page.banner_image %}
+                    <div class="mb-3">
+                        <img src="{{ page.banner_image }}" alt="Banner Preview" class="img-fluid rounded mb-2">
+                        <small class="text-muted d-block">Current banner image</small>
+                    </div>
+                    {% endif %}
+                    <input type="file" class="form-control" id="banner_image" name="banner_image" accept="image/*">
+                    <div class="form-text">Recommended size: 1920x400 pixels.</div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i> Update Page
+                </button>
+                <a href="{{ url_for('admin.cms_pages') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-1"></i> Cancel
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('title').addEventListener('input', function() {
+        var slug = this.value.toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .trim();
+        document.getElementById('slug').value = slug;
+    });
+</script>
+{% endblock %}

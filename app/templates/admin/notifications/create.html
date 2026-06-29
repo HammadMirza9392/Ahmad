@@ -1,0 +1,209 @@
+{% extends "layouts/admin.html" %}
+
+{% block title %}Create Notification{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1"><i class="bi bi-bell-fill me-2"></i>Create Notification</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.notifications') }}">Notifications</a></li>
+                    <li class="breadcrumb-item active">Create</li>
+                </ol>
+            </nav>
+        </div>
+        <a href="{{ url_for('admin.notifications') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back to Notifications
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0"><i class="bi bi-plus-circle me-2"></i>New Notification</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.notification_create') }}" id="notificationForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title"
+                                   placeholder="Enter notification title"
+                                   required maxlength="200">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="content" name="content" rows="5"
+                                      placeholder="Enter the notification message content"
+                                      required></textarea>
+                            <div class="form-text">The full notification message that will be displayed to recipients.</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="notification_type" class="form-label">Notification Type <span class="text-danger">*</span></label>
+                                <select class="form-select" id="notification_type" name="notification_type" required>
+                                    <option value="" disabled selected>Select type</option>
+                                    <option value="news">News</option>
+                                    <option value="exam">Exam</option>
+                                    <option value="admission">Admission</option>
+                                    <option value="assignment">Assignment</option>
+                                    <option value="holiday">Holiday</option>
+                                    <option value="scholarship">Scholarship</option>
+                                    <option value="result">Result</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="priority" class="form-label">Priority <span class="text-danger">*</span></label>
+                                <select class="form-select" id="priority" name="priority" required>
+                                    <option value="low">Low</option>
+                                    <option value="normal" selected>Normal</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <hr class="my-3">
+                        <h6 class="text-muted mb-3"><i class="bi bi-people me-1"></i>Target Audience</h6>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="target_type" class="form-label">Target Type <span class="text-danger">*</span></label>
+                                <select class="form-select" id="target_type" name="target_type" required>
+                                    <option value="all" selected>All Users</option>
+                                    <option value="department">Specific Department</option>
+                                    <option value="class">Specific Class</option>
+                                    <option value="semester">Specific Semester</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3" id="departmentGroup" style="display: none;">
+                                <label for="department_id" class="form-label">Department</label>
+                                <select class="form-select" id="department_id" name="department_id">
+                                    <option value="" disabled selected>Select department</option>
+                                    {% for department in departments %}
+                                    <option value="{{ department.id }}">{{ department.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3" id="classGroup" style="display: none;">
+                                <label for="class_id" class="form-label">Class</label>
+                                <select class="form-select" id="class_id" name="class_id">
+                                    <option value="" disabled selected>Select class</option>
+                                </select>
+                                <div class="form-text">Classes will be loaded based on the selected department.</div>
+                            </div>
+                            <div class="col-md-6 mb-3" id="semesterGroup" style="display: none;">
+                                <label for="semester" class="form-label">Semester</label>
+                                <input type="text" class="form-control" id="semester" name="semester"
+                                       placeholder="e.g., Fall 2025, Spring 2026">
+                            </div>
+                        </div>
+
+                        <hr class="my-3">
+                        <h6 class="text-muted mb-3"><i class="bi bi-gear me-1"></i>Settings</h6>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="expires_at" class="form-label">Expires At</label>
+                                <input type="datetime-local" class="form-control" id="expires_at" name="expires_at">
+                                <div class="form-text">Leave empty for no expiration date.</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="mt-md-4 pt-md-2">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="is_active"
+                                               name="is_active" value="1" checked>
+                                        <label class="form-check-label" for="is_active">
+                                            <i class="bi bi-eye me-1"></i>Active (visible to users)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('admin.notifications') }}" class="btn btn-light">
+                                <i class="bi bi-x-lg me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send me-1"></i>Create Notification
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const targetType = document.getElementById('target_type');
+        const departmentGroup = document.getElementById('departmentGroup');
+        const classGroup = document.getElementById('classGroup');
+        const semesterGroup = document.getElementById('semesterGroup');
+        const departmentSelect = document.getElementById('department_id');
+        const classSelect = document.getElementById('class_id');
+
+        function toggleTargetFields() {
+            const value = targetType.value;
+
+            departmentGroup.style.display = 'none';
+            classGroup.style.display = 'none';
+            semesterGroup.style.display = 'none';
+
+            departmentSelect.removeAttribute('required');
+            classSelect.removeAttribute('required');
+            document.getElementById('semester').removeAttribute('required');
+
+            if (value === 'department') {
+                departmentGroup.style.display = '';
+                departmentSelect.setAttribute('required', 'required');
+            } else if (value === 'class') {
+                departmentGroup.style.display = '';
+                classGroup.style.display = '';
+                departmentSelect.setAttribute('required', 'required');
+                classSelect.setAttribute('required', 'required');
+            } else if (value === 'semester') {
+                semesterGroup.style.display = '';
+                document.getElementById('semester').setAttribute('required', 'required');
+            }
+        }
+
+        targetType.addEventListener('change', toggleTargetFields);
+        toggleTargetFields();
+
+        departmentSelect.addEventListener('change', function() {
+            const deptId = this.value;
+            if (deptId && targetType.value === 'class') {
+                classSelect.innerHTML = '<option value="" disabled selected>Loading classes...</option>';
+                fetch('{{ url_for("admin.get_classes_by_department") }}?department_id=' + deptId)
+                    .then(response => response.json())
+                    .then(data => {
+                        classSelect.innerHTML = '<option value="" disabled selected>Select class</option>';
+                        data.forEach(function(cls) {
+                            const option = document.createElement('option');
+                            option.value = cls.id;
+                            option.textContent = cls.name;
+                            classSelect.appendChild(option);
+                        });
+                    })
+                    .catch(function() {
+                        classSelect.innerHTML = '<option value="" disabled selected>Failed to load classes</option>';
+                    });
+            }
+        });
+    });
+</script>
+{% endblock %}

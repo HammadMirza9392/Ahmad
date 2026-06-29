@@ -1,0 +1,153 @@
+{% extends "layouts/admin.html" %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1"><i class="bi bi-bell me-2"></i>Notifications</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Notifications</li>
+                </ol>
+            </nav>
+        </div>
+        <a href="{{ url_for('admin.notification_create') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Create Notification
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0"><i class="bi bi-list-ul me-2"></i>All Notifications</h5>
+            <span class="badge bg-secondary">{{ pagination.total }} total</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" style="width: 5%">#</th>
+                            <th scope="col" style="width: 25%">Title</th>
+                            <th scope="col" style="width: 12%">Type</th>
+                            <th scope="col" style="width: 18%">Target</th>
+                            <th scope="col" style="width: 10%">Priority</th>
+                            <th scope="col" style="width: 10%">Active</th>
+                            <th scope="col" style="width: 20%">Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for notification in pagination.items %}
+                        <tr>
+                            <td>{{ notification.id }}</td>
+                            <td>
+                                <div class="fw-semibold">{{ notification.title }}</div>
+                                {% if notification.content %}
+                                <small class="text-muted">{{ notification.content|truncate(60) }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% set type_colors = {
+                                    'news': 'primary',
+                                    'exam': 'warning',
+                                    'admission': 'success',
+                                    'assignment': 'info',
+                                    'holiday': 'danger',
+                                    'scholarship': 'purple',
+                                    'result': 'dark'
+                                } %}
+                                <span class="badge bg-{{ type_colors.get(notification.notification_type, 'secondary') }}">
+                                    {{ notification.notification_type|capitalize }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-outline-secondary border text-dark">
+                                    {{ notification.target_type|capitalize }}
+                                </span>
+                                {% if notification.target_type == 'department' and notification.department %}
+                                <br><small class="text-muted">
+                                    <i class="bi bi-building me-1"></i>{{ notification.department.name }}
+                                </small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% set priority_colors = {
+                                    'low': 'secondary',
+                                    'normal': 'primary',
+                                    'high': 'warning',
+                                    'urgent': 'danger'
+                                } %}
+                                <span class="badge bg-{{ priority_colors.get(notification.priority, 'secondary') }}">
+                                    {% if notification.priority == 'urgent' %}
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    {% elif notification.priority == 'high' %}
+                                    <i class="bi bi-exclamation-circle me-1"></i>
+                                    {% endif %}
+                                    {{ notification.priority|capitalize }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if notification.is_active %}
+                                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Active</span>
+                                {% else %}
+                                <span class="badge bg-secondary"><i class="bi bi-x-circle me-1"></i>Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar me-1"></i>{{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                </small>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="bi bi-bell-slash fs-1 d-block mb-2"></i>
+                                    <p class="mb-1">No notifications found.</p>
+                                    <a href="{{ url_for('admin.notification_create') }}" class="btn btn-sm btn-primary mt-2">
+                                        <i class="bi bi-plus-lg me-1"></i>Create First Notification
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if pagination.pages > 1 %}
+        <div class="card-footer bg-white">
+            <nav aria-label="Notifications pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.notifications', page=pagination.prev_num) }}">
+                            <i class="bi bi-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                        <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin.notifications', page=page_num) }}">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">&hellip;</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.notifications', page=pagination.next_num) }}">
+                            Next <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

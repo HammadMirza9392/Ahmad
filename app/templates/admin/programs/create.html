@@ -1,0 +1,131 @@
+{% extends "layouts/admin.html" %}
+
+{% block title %}Create Program{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-plus-circle me-2"></i>Create Program</h1>
+    <a href="{{ url_for('admin.programs') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Programs
+    </a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<form method="POST" action="{{ url_for('admin.program_create') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="row">
+        <!-- Main Info -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Program Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Program Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" required placeholder="e.g., Bachelor of Computer Science">
+                    </div>
+                    <div class="mb-3">
+                        <label for="slug" class="form-label">Slug <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text">/programs/</span>
+                            <input type="text" class="form-control" id="slug" name="slug" required placeholder="bachelor-of-computer-science">
+                        </div>
+                        <div class="form-text">URL-friendly identifier. Auto-generated from name.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="5" placeholder="Describe the program, its objectives, career prospects, and curriculum overview..."></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="duration" class="form-label">Duration</label>
+                            <input type="text" class="form-control" id="duration" name="duration" placeholder="e.g., 4 Years, 2 Years, 6 Semesters">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="degree_type" class="form-label">Degree Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="degree_type" name="degree_type" required>
+                                <option value="">-- Select Degree Type --</option>
+                                <option value="Intermediate">Intermediate</option>
+                                <option value="Bachelor">Bachelor</option>
+                                <option value="Master">Master</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Department & Settings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="bi bi-gear me-2"></i>Settings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="department_id" class="form-label">Department <span class="text-danger">*</span></label>
+                        <select class="form-select" id="department_id" name="department_id" required>
+                            <option value="">-- Select Department --</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.id }}">{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if not departments %}
+                        <div class="form-text text-warning">
+                            <i class="bi bi-exclamation-triangle me-1"></i>No departments available.
+                            <a href="{{ url_for('admin.department_create') }}">Create one first</a>.
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="sort_order" class="form-label">Sort Order</label>
+                        <input type="number" class="form-control" id="sort_order" name="sort_order" value="0" min="0">
+                        <div class="form-text">Lower numbers appear first.</div>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" checked>
+                        <label class="form-check-label" for="is_active">Active</label>
+                        <div class="form-text">Inactive programs are hidden from the public site.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i> Create Program
+                </button>
+                <a href="{{ url_for('admin.programs') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-1"></i> Cancel
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('name').addEventListener('input', function() {
+        var slug = this.value.toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .trim();
+        document.getElementById('slug').value = slug;
+    });
+</script>
+{% endblock %}

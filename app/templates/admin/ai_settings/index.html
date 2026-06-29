@@ -1,0 +1,171 @@
+{% extends "layouts/admin.html" %}
+{% block title %}AI Settings{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-robot me-2"></i>AI Provider Settings</h1>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="stat-icon gradient-primary"><i class="bi bi-cpu"></i></div>
+            <div class="stat-info"><h3>{{ providers|length }}</h3><p>Total Providers</p></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="stat-icon gradient-success"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-info"><h3>{{ providers|selectattr('is_active')|list|length }}</h3><p>Active Providers</p></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="stat-icon gradient-info"><i class="bi bi-star"></i></div>
+            <div class="stat-info">
+                <h3>{% for p in providers if p.is_primary %}{{ p.name }}{% endfor %}{% if not providers|selectattr('is_primary')|list %}None{% endif %}</h3>
+                <p>Primary Provider</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Providers Table -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Provider</th>
+                        <th>Status</th>
+                        <th>Role</th>
+                        <th>Get API Key</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for provider in providers %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;
+                                    {% if provider.provider_type == 'gemini' %}background:linear-gradient(135deg,#4285f4,#34a853);
+                                    {% elif provider.provider_type == 'groq' %}background:linear-gradient(135deg,#f55036,#ff7043);
+                                    {% elif provider.provider_type == 'openrouter' %}background:linear-gradient(135deg,#6366f1,#8b5cf6);
+                                    {% elif provider.provider_type == 'huggingface' %}background:linear-gradient(135deg,#ff9d00,#ffcd00);color:#333;
+                                    {% elif provider.provider_type == 'deepseek' %}background:linear-gradient(135deg,#0066ff,#00ccff);
+                                    {% else %}background:linear-gradient(135deg,#667eea,#764ba2);{% endif %}">
+                                    <i class="bi bi-robot"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ provider.name }}</div>
+                                    <small class="text-muted">{{ provider.provider_type }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if provider.is_active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if provider.is_primary %}<span class="badge bg-primary">Primary</span>
+                            {% elif provider.is_backup %}<span class="badge bg-warning text-dark">Backup</span>
+                            {% else %}<span class="text-muted small">—</span>{% endif %}
+                        </td>
+                        <td>
+                            {% set api_urls = {
+                                'gemini': 'https://aistudio.google.com/app/apikey',
+                                'groq': 'https://console.groq.com/keys',
+                                'openrouter': 'https://openrouter.ai/keys',
+                                'huggingface': 'https://huggingface.co/settings/tokens',
+                                'deepseek': 'https://platform.deepseek.com/api_keys'
+                            } %}
+                            <a href="{{ api_urls.get(provider.provider_type, '#') }}" target="_blank" class="btn btn-sm btn-outline-primary" title="Get API Key from {{ provider.name }}">
+                                <i class="bi bi-key me-1"></i>Get Key
+                            </a>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('admin.ai_settings_edit', provider_id=provider.id) }}" class="btn btn-outline-primary">
+                                    <i class="bi bi-pencil"></i> Configure
+                                </a>
+                                {% if provider.is_active %}
+                                <button type="button" class="btn btn-outline-info" onclick="testProvider({{ provider.id }}, '{{ provider.name }}')">
+                                    <i class="bi bi-lightning"></i> Test
+                                </button>
+                                {% else %}
+                                <a href="{{ url_for('admin.ai_settings_edit', provider_id=provider.id) }}" class="btn btn-outline-secondary" title="Configure API key first">
+                                    <i class="bi bi-key"></i> Add Key
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Setup Guide -->
+<div class="card mt-4">
+    <div class="card-body">
+        <h6 class="fw-bold mb-3"><i class="bi bi-info-circle me-2"></i>Quick Setup Guide</h6>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="p-3 border rounded-3">
+                    <span class="badge bg-primary mb-2">Step 1</span>
+                    <p class="small mb-0">Click <strong>"Get Key"</strong> to open the provider's website and generate an API key.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 border rounded-3">
+                    <span class="badge bg-primary mb-2">Step 2</span>
+                    <p class="small mb-0">Click <strong>"Configure"</strong> to paste your API key. The model and endpoint are auto-configured.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 border rounded-3">
+                    <span class="badge bg-primary mb-2">Step 3</span>
+                    <p class="small mb-0">Click <strong>"Test"</strong> to verify the connection, then set as <strong>Primary</strong> or <strong>Backup</strong>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Modal -->
+<div class="modal fade" id="testModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title" id="testModalLabel">Testing Provider</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body" id="testResultBody"><div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Testing connection...</p></div></div>
+    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div>
+</div></div></div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+function testProvider(id, name) {
+    const modal = new bootstrap.Modal(document.getElementById('testModal'));
+    document.getElementById('testModalLabel').textContent = 'Testing: ' + name;
+    document.getElementById('testResultBody').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Testing connection...</p></div>';
+    modal.show();
+    fetch('/admin/ai-settings/test/' + id, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}'}
+    }).then(r => r.json()).then(data => {
+        document.getElementById('testResultBody').innerHTML = data.success
+            ? '<div class="alert alert-success mb-0"><i class="bi bi-check-circle-fill me-2"></i><strong>Success!</strong><br>' + data.message + '</div>'
+            : '<div class="alert alert-danger mb-0"><i class="bi bi-x-circle-fill me-2"></i><strong>Failed</strong><br>' + data.message + '</div>';
+    }).catch(e => {
+        document.getElementById('testResultBody').innerHTML = '<div class="alert alert-danger mb-0">Error: ' + e.message + '</div>';
+    });
+}
+</script>
+{% endblock %}

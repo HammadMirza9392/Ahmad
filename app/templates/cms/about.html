@@ -1,0 +1,226 @@
+{% extends "layouts/cms.html" %}
+
+{% block title %}About Us{% endblock %}
+
+{% block content %}
+<!-- Page Banner -->
+<section class="hero-section" style="padding:3.5rem 0;">
+    <div class="container">
+        <h1 class="fw-bold mb-2">About Us</h1>
+        <p class="mb-0">
+            <a href="{{ url_for('cms.home') }}" class="text-white-50 text-decoration-none">Home</a>
+            <span class="mx-2 text-white-50">/</span>
+            <span>About Us</span>
+        </p>
+    </div>
+</section>
+
+<!-- About Section -->
+{% if institution and institution.about %}
+<section class="section">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-7">
+                <h2 class="section-title text-start mb-3">{{ institution.name }}</h2>
+                {% if institution.university_name %}
+                <p class="text-muted mb-3">
+                    <i class="bi bi-award me-1"></i>Affiliated with <strong>{{ institution.university_name }}</strong>
+                </p>
+                {% endif %}
+                <div class="text-muted" style="line-height:1.8;">
+                    {{ institution.about | markdown }}
+                </div>
+            </div>
+            <div class="col-lg-5">
+                {% if institution.banner %}
+                <img src="{{ institution.banner }}" alt="{{ institution.name }}" class="img-fluid rounded-3 shadow-sm" style="width:100%;max-height:400px;object-fit:cover;">
+                {% else %}
+                <div class="rounded-3 d-flex align-items-center justify-content-center" style="height:350px;background:linear-gradient(135deg,var(--primary),var(--secondary));">
+                    <i class="bi bi-mortarboard display-1 text-white"></i>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Vision & Mission -->
+{% if institution and (institution.vision or institution.mission) %}
+<section class="section" style="background:linear-gradient(135deg,#1a56db08,#7c3aed08);">
+    <div class="container">
+        <div class="row g-4 justify-content-center">
+            {% if institution.vision %}
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="gradient-primary rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width:52px;height:52px;">
+                                <i class="bi bi-eye fs-4 text-white"></i>
+                            </div>
+                            <h4 class="fw-bold mb-0">Our Vision</h4>
+                        </div>
+                        <div class="text-muted" style="line-height:1.8;">
+                            {{ institution.vision | markdown }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% if institution.mission %}
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="gradient-success rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width:52px;height:52px;">
+                                <i class="bi bi-bullseye fs-4 text-white"></i>
+                            </div>
+                            <h4 class="fw-bold mb-0">Our Mission</h4>
+                        </div>
+                        <div class="text-muted" style="line-height:1.8;">
+                            {{ institution.mission | markdown }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- History -->
+{% if institution and institution.history %}
+<section class="section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <h2 class="section-title">Our History</h2>
+                <p class="section-subtitle">A journey of academic excellence</p>
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4 p-lg-5">
+                        <div class="text-muted" style="line-height:1.8;">
+                            {{ institution.history | markdown }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Principal Message -->
+{% if institution and institution.principal_message %}
+<section class="section" style="background:linear-gradient(135deg,#1a56db08,#7c3aed08);">
+    <div class="container">
+        <h2 class="section-title">Message from the Principal</h2>
+        <p class="section-subtitle">{{ institution.principal_name or '' }}</p>
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4 p-lg-5">
+                        <div class="row align-items-start g-4">
+                            <div class="col-md-3 text-center">
+                                {% if institution.principal_image %}
+                                <img src="{{ institution.principal_image }}" alt="{{ institution.principal_name }}"
+                                     class="rounded-3 img-fluid shadow-sm mb-3" style="max-width:200px;aspect-ratio:3/4;object-fit:cover;">
+                                {% else %}
+                                <div class="rounded-3 mx-auto d-flex align-items-center justify-content-center gradient-primary" style="width:160px;height:200px;">
+                                    <i class="bi bi-person display-3 text-white"></i>
+                                </div>
+                                {% endif %}
+                                <h5 class="fw-bold mt-2 mb-0">{{ institution.principal_name or 'Principal' }}</h5>
+                                <span class="badge bg-primary bg-opacity-10 text-primary">Principal</span>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="text-muted" style="line-height:1.8;font-style:italic;">
+                                    {{ institution.principal_message | markdown }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- VC Message -->
+{% if institution and institution.vc_message %}
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">Message from the Vice Chancellor</h2>
+        <p class="section-subtitle">{{ institution.vc_name or '' }}</p>
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4 p-lg-5">
+                        <div class="row align-items-start g-4">
+                            <div class="col-md-3 text-center">
+                                {% if institution.vc_image %}
+                                <img src="{{ institution.vc_image }}" alt="{{ institution.vc_name }}"
+                                     class="rounded-3 img-fluid shadow-sm mb-3" style="max-width:200px;aspect-ratio:3/4;object-fit:cover;">
+                                {% else %}
+                                <div class="rounded-3 mx-auto d-flex align-items-center justify-content-center gradient-secondary" style="width:160px;height:200px;">
+                                    <i class="bi bi-person display-3 text-white"></i>
+                                </div>
+                                {% endif %}
+                                <h5 class="fw-bold mt-2 mb-0">{{ institution.vc_name or 'Vice Chancellor' }}</h5>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary">Vice Chancellor</span>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="text-muted" style="line-height:1.8;font-style:italic;">
+                                    {{ institution.vc_message | markdown }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Page Custom Content -->
+{% if page and page.content %}
+<section class="section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                {{ page.content | markdown }}
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Page Sections -->
+{% if page and page.sections %}
+{% for section in page.sections %}
+{% if section.is_visible %}
+<section class="section{% if loop.index is odd %}" style="background:var(--bg-body);{% else %}{% endif %}">
+    <div class="container">
+        {% if section.title %}
+        <h2 class="section-title">{{ section.title }}</h2>
+        {% endif %}
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                {% if section.image %}
+                <img src="{{ section.image }}" alt="{{ section.title }}" class="img-fluid rounded-3 shadow-sm mb-4" style="width:100%;max-height:400px;object-fit:cover;">
+                {% endif %}
+                {% if section.content %}
+                <div class="text-muted" style="line-height:1.8;">
+                    {{ section.content | markdown }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endblock %}

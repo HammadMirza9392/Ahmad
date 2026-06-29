@@ -1,0 +1,237 @@
+{% extends "layouts/student.html" %}
+
+{% block title %}Quiz{% endblock %}
+{% block page_title %}AI Quiz Generator{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Quiz Setup -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 pt-4 px-4">
+                <h5 class="fw-bold mb-1"><i class="bi bi-patch-question me-2 text-primary"></i>Generate Quiz</h5>
+                <p class="text-muted small mb-0">Select a subject and let AI create a quiz for you</p>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Subject</label>
+                    <select id="quizSubject" class="form-select">
+                        <option value="">-- Select Subject --</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Topic (optional)</label>
+                    <input type="text" id="quizTopic" class="form-control" placeholder="e.g. Network Topologies, C Loops">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Number of Questions</label>
+                    <select id="quizCount" class="form-select">
+                        <option value="5">5 Questions</option>
+                        <option value="10" selected>10 Questions</option>
+                        <option value="15">15 Questions</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Difficulty</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="difficulty" id="diffEasy" value="easy">
+                        <label class="btn btn-outline-success" for="diffEasy">Easy</label>
+                        <input type="radio" class="btn-check" name="difficulty" id="diffMedium" value="medium" checked>
+                        <label class="btn btn-outline-warning" for="diffMedium">Medium</label>
+                        <input type="radio" class="btn-check" name="difficulty" id="diffHard" value="hard">
+                        <label class="btn btn-outline-danger" for="diffHard">Hard</label>
+                    </div>
+                </div>
+                <button id="generateQuizBtn" class="btn btn-primary w-100 btn-lg" disabled>
+                    <i class="bi bi-lightning-fill me-2"></i>Generate Quiz
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Area -->
+    <div class="col-lg-7">
+        <div id="quizPlaceholder" class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <div style="font-size:4rem;opacity:.15;"><i class="bi bi-patch-question"></i></div>
+                <h5 class="text-muted mt-3">Ready to Test Your Knowledge?</h5>
+                <p class="text-muted">Select a subject and click Generate to start.</p>
+            </div>
+        </div>
+
+        <div id="quizLoading" class="card border-0 shadow-sm d-none">
+            <div class="card-body text-center py-5">
+                <div class="spinner-border text-primary mb-3" role="status"></div>
+                <h5 class="text-muted">Generating your quiz...</h5>
+                <p class="text-muted small">AI is creating personalized questions</p>
+            </div>
+        </div>
+
+        <div id="quizError" class="alert alert-danger d-none"></div>
+
+        <div id="quizContainer" class="d-none">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex align-items-center justify-content-between">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-journal-check me-2"></i>Quiz</h5>
+                    <span id="quizProgress" class="badge bg-primary px-3 py-2">0/0</span>
+                </div>
+                <div class="card-body p-4" id="quizQuestions"></div>
+                <div class="card-footer bg-transparent border-0 p-4">
+                    <div class="d-flex justify-content-between">
+                        <button id="prevBtn" class="btn btn-outline-secondary" disabled><i class="bi bi-arrow-left me-1"></i>Previous</button>
+                        <button id="nextBtn" class="btn btn-primary">Next<i class="bi bi-arrow-right ms-1"></i></button>
+                        <button id="submitBtn" class="btn btn-success d-none"><i class="bi bi-check-circle me-1"></i>Submit Quiz</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="quizResults" class="card border-0 shadow-sm d-none">
+            <div class="card-body text-center py-5">
+                <div id="resultsIcon" style="font-size:4rem;"></div>
+                <h3 id="resultsScore" class="fw-bold mt-3"></h3>
+                <p id="resultsSummary" class="text-muted"></p>
+                <div id="resultsDetail" class="text-start mt-4"></div>
+                <button id="retryBtn" class="btn btn-primary mt-3"><i class="bi bi-arrow-clockwise me-2"></i>Try Again</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+    const CSRF = document.querySelector('meta[name="csrf-token"]')?.content;
+    let questions = [], currentQ = 0, answers = {};
+
+    const subjectSel = document.getElementById('quizSubject');
+    const genBtn = document.getElementById('generateQuizBtn');
+    const placeholder = document.getElementById('quizPlaceholder');
+    const loading = document.getElementById('quizLoading');
+    const errorEl = document.getElementById('quizError');
+    const container = document.getElementById('quizContainer');
+    const qArea = document.getElementById('quizQuestions');
+    const progress = document.getElementById('quizProgress');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const results = document.getElementById('quizResults');
+    const retryBtn = document.getElementById('retryBtn');
+
+    subjectSel.addEventListener('change', () => { genBtn.disabled = !subjectSel.value; });
+
+    genBtn.addEventListener('click', async () => {
+        placeholder.classList.add('d-none');
+        container.classList.add('d-none');
+        results.classList.add('d-none');
+        errorEl.classList.add('d-none');
+        loading.classList.remove('d-none');
+        genBtn.disabled = true;
+
+        try {
+            const res = await fetch("{{ url_for('student.quiz_generate') }}", {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
+                body: JSON.stringify({
+                    subject_id: subjectSel.value,
+                    topic: document.getElementById('quizTopic').value.trim(),
+                    count: document.getElementById('quizCount').value,
+                    difficulty: document.querySelector('input[name="difficulty"]:checked')?.value || 'medium',
+                })
+            });
+            const data = await res.json();
+
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            questions = data.questions || [];
+            if (!questions.length) throw new Error('No questions generated.');
+
+            currentQ = 0;
+            answers = {};
+            loading.classList.add('d-none');
+            container.classList.remove('d-none');
+            renderQuestion();
+        } catch(e) {
+            loading.classList.add('d-none');
+            errorEl.textContent = 'Error: ' + e.message;
+            errorEl.classList.remove('d-none');
+            placeholder.classList.remove('d-none');
+        } finally {
+            genBtn.disabled = !subjectSel.value;
+        }
+    });
+
+    function renderQuestion() {
+        if (!questions.length) return;
+        const q = questions[currentQ];
+        progress.textContent = `${currentQ + 1}/${questions.length}`;
+
+        let html = `<h5 class="fw-semibold mb-4">${currentQ + 1}. ${q.q}</h5><div class="d-grid gap-2">`;
+        (q.options || []).forEach((opt, i) => {
+            const selected = answers[currentQ] === i ? 'btn-primary text-white' : 'btn-outline-secondary';
+            html += `<button class="btn ${selected} text-start quiz-opt py-3 px-4" data-idx="${i}">
+                <span class="fw-bold me-2">${String.fromCharCode(65 + i)}.</span>${opt}
+            </button>`;
+        });
+        html += '</div>';
+        qArea.innerHTML = html;
+
+        qArea.querySelectorAll('.quiz-opt').forEach(btn => {
+            btn.addEventListener('click', () => {
+                answers[currentQ] = parseInt(btn.dataset.idx);
+                renderQuestion();
+            });
+        });
+
+        prevBtn.disabled = currentQ === 0;
+        nextBtn.classList.toggle('d-none', currentQ === questions.length - 1);
+        submitBtn.classList.toggle('d-none', currentQ !== questions.length - 1);
+    }
+
+    prevBtn.addEventListener('click', () => { if (currentQ > 0) { currentQ--; renderQuestion(); } });
+    nextBtn.addEventListener('click', () => { if (currentQ < questions.length - 1) { currentQ++; renderQuestion(); } });
+
+    submitBtn.addEventListener('click', () => {
+        let correct = 0;
+        let detailHtml = '';
+        questions.forEach((q, i) => {
+            const isCorrect = answers[i] === q.answer;
+            if (isCorrect) correct++;
+            const correctOption = q.options[q.answer] || '?';
+            const yourOption = answers[i] !== undefined ? (q.options[answers[i]] || 'No answer') : 'No answer';
+            detailHtml += `<div class="p-3 mb-2 rounded-3 ${isCorrect ? 'bg-success bg-opacity-10' : 'bg-danger bg-opacity-10'}">
+                <div class="fw-bold small">${i + 1}. ${q.q}</div>
+                <div class="small mt-1">Your answer: <strong>${yourOption}</strong></div>
+                ${!isCorrect ? `<div class="small text-success">Correct: <strong>${correctOption}</strong></div>` : ''}
+            </div>`;
+        });
+
+        const pct = Math.round((correct / questions.length) * 100);
+        container.classList.add('d-none');
+        results.classList.remove('d-none');
+
+        document.getElementById('resultsIcon').innerHTML = pct >= 70
+            ? '<i class="bi bi-trophy-fill text-warning"></i>'
+            : pct >= 40 ? '<i class="bi bi-emoji-smile text-primary"></i>'
+            : '<i class="bi bi-emoji-frown text-danger"></i>';
+        document.getElementById('resultsScore').textContent = `${correct}/${questions.length} (${pct}%)`;
+        document.getElementById('resultsSummary').textContent = pct >= 70
+            ? 'Great job! You have a solid understanding.'
+            : pct >= 40 ? 'Good effort! Review weak areas and try again.'
+            : 'Keep studying! Review the material and try again.';
+        document.getElementById('resultsDetail').innerHTML = detailHtml;
+    });
+
+    retryBtn.addEventListener('click', () => {
+        results.classList.add('d-none');
+        placeholder.classList.remove('d-none');
+    });
+})();
+</script>
+{% endblock %}

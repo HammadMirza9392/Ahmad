@@ -1,0 +1,44 @@
+# Environment
+.env
+venv/
+env/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads (keep structure, ignore content)
+app/static/uploads/institution/*
+app/static/uploads/departments/*
+app/static/uploads/gallery/*
+app/static/uploads/knowledge_base/*
+app/static/uploads/downloads/*
+app/static/uploads/profiles/*
+app/static/uploads/cms/*
+!app/static/uploads/**/.gitkeep
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite3

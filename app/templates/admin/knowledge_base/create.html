@@ -1,0 +1,119 @@
+{% extends "layouts/admin.html" %}
+
+{% block title %}Create Knowledge Base Entry{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-database-add me-2"></i>Create Knowledge Base Entry</h1>
+    <a href="{{ url_for('admin.knowledge_base') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back to Knowledge Base
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="card-title mb-0">New Entry</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('admin.knowledge_create') }}" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" name="title" required placeholder="Enter knowledge base title">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="content" class="form-label">Content</label>
+                        <textarea class="form-control" id="content" name="content" rows="8" placeholder="Enter content or description..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="tags" class="form-label">Tags</label>
+                        <input type="text" class="form-control" id="tags" name="tags" placeholder="Comma-separated tags (e.g., math, algebra, chapter1)">
+                        <div class="form-text">Separate multiple tags with commas.</div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="department_id" class="form-label">Department</label>
+                        <select class="form-select" id="department_id" name="department_id">
+                            <option value="">-- Select Department --</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.id }}">{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="program_id" class="form-label">Program</label>
+                        <select class="form-select" id="program_id" name="program_id">
+                            <option value="">-- Select Program --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="class_id" class="form-label">Class</label>
+                        <select class="form-select" id="class_id" name="class_id">
+                            <option value="">-- Select Class --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="subject_id" class="form-label">Subject</label>
+                        <select class="form-select" id="subject_id" name="subject_id">
+                            <option value="">-- Select Subject --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="chapter" class="form-label">Chapter</label>
+                        <input type="text" class="form-control" id="chapter" name="chapter" placeholder="e.g., Chapter 3">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="topic" class="form-label">Topic</label>
+                        <input type="text" class="form-control" id="topic" name="topic" placeholder="e.g., Quadratic Equations">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="draft">Draft</option>
+                            <option value="published">Published</option>
+                            <option value="archived">Archived</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="content_type" class="form-label">Content Type</label>
+                        <select class="form-select" id="content_type" name="content_type">
+                            <option value="text">Text</option>
+                            <option value="file">File</option>
+                            <option value="mixed">Mixed</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="mb-3">
+                <label for="files" class="form-label"><i class="bi bi-paperclip me-1"></i>Attach Files</label>
+                <input type="file" class="form-control" id="files" name="files" multiple>
+                <div class="form-text">You can upload multiple files (PDF, DOCX, images, etc.).</div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i>Create Entry
+                </button>
+                <a href="{{ url_for('admin.knowledge_base') }}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

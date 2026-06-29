@@ -1,0 +1,379 @@
+{% extends "layouts/cms.html" %}
+
+{% block title %}{{ dept.name }}{% endblock %}
+
+{% block content %}
+<!-- Department Banner -->
+<section class="hero-section position-relative" style="padding:3.5rem 0;">
+    {% if dept.image %}
+    <div class="position-absolute top-0 start-0 w-100 h-100" style="background:url('{{ dept.image }}') center/cover no-repeat;opacity:0.12;"></div>
+    {% endif %}
+    <div class="container position-relative">
+        <h1 class="fw-bold mb-2">{{ dept.name }}</h1>
+        <p class="mb-0">
+            <a href="{{ url_for('cms.home') }}" class="text-white-50 text-decoration-none">Home</a>
+            <span class="mx-2 text-white-50">/</span>
+            <a href="{{ url_for('cms.page', slug='departments') }}" class="text-white-50 text-decoration-none">Departments</a>
+            <span class="mx-2 text-white-50">/</span>
+            <span>{{ dept.name }}</span>
+        </p>
+    </div>
+</section>
+
+<!-- Department Overview -->
+<section class="section">
+    <div class="container">
+        <div class="row g-5">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <!-- About Department -->
+                {% if dept.description %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h3 class="fw-bold mb-3">
+                            <i class="bi bi-info-circle text-primary me-2"></i>About the Department
+                        </h3>
+                        <div class="text-muted" style="line-height:1.8;">
+                            {{ dept.description | markdown }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Programs Offered -->
+                {% if dept.programs %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h3 class="fw-bold mb-3">
+                            <i class="bi bi-journal-bookmark text-primary me-2"></i>Programs Offered
+                        </h3>
+                        <div class="row g-3">
+                            {% for program in dept.programs %}
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3 h-100" style="border-color:var(--border-color)!important;">
+                                    <div class="d-flex align-items-start gap-3">
+                                        <div class="gradient-primary rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width:42px;height:42px;">
+                                            <i class="bi bi-mortarboard text-white"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="fw-bold mb-1">{{ program.name }}</h6>
+                                            {% if program.degree_type %}
+                                            <span class="badge bg-primary bg-opacity-10 text-primary me-1">{{ program.degree_type }}</span>
+                                            {% endif %}
+                                            {% if program.duration %}
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary">{{ program.duration }}</span>
+                                            {% endif %}
+                                            {% if program.description %}
+                                            <p class="text-muted small mb-0 mt-1">{{ program.description | truncate(100, True) }}</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Subjects -->
+                {% if dept.subjects %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h3 class="fw-bold mb-3">
+                            <i class="bi bi-book text-primary me-2"></i>Subjects
+                        </h3>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for subject in dept.subjects %}
+                            <span class="badge bg-light text-dark border py-2 px-3" style="font-size:0.85rem;">
+                                {{ subject.name }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Department News -->
+                {% if dept.news_articles %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h3 class="fw-bold mb-3">
+                            <i class="bi bi-newspaper text-primary me-2"></i>Department News
+                        </h3>
+                        {% for article in dept.news_articles[:5] %}
+                        <div class="d-flex gap-3 {% if not loop.last %}mb-3 pb-3 border-bottom{% endif %}">
+                            {% if article.image %}
+                            <img src="{{ article.image }}" alt="{{ article.title }}" class="rounded-3 flex-shrink-0" style="width:80px;height:60px;object-fit:cover;">
+                            {% else %}
+                            <div class="rounded-3 flex-shrink-0 d-flex align-items-center justify-content-center" style="width:80px;height:60px;background:linear-gradient(135deg,var(--primary),var(--secondary));">
+                                <i class="bi bi-newspaper text-white"></i>
+                            </div>
+                            {% endif %}
+                            <div>
+                                <h6 class="fw-bold mb-1" style="font-size:0.9rem;">{{ article.title }}</h6>
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar3 me-1"></i>{{ article.published_at.strftime('%b %d, %Y') if article.published_at else '' }}
+                                </small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Department Events -->
+                {% if dept.events %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h3 class="fw-bold mb-3">
+                            <i class="bi bi-calendar-event text-primary me-2"></i>Department Events
+                        </h3>
+                        {% for event in dept.events[:5] %}
+                        <div class="d-flex gap-3 align-items-start {% if not loop.last %}mb-3 pb-3 border-bottom{% endif %}">
+                            <div class="text-center flex-shrink-0" style="min-width:55px;">
+                                {% if event.event_date %}
+                                <div class="rounded-3 p-2" style="background:linear-gradient(135deg,var(--primary),var(--secondary));">
+                                    <div class="text-white fw-bold" style="font-size:1.1rem;line-height:1;">{{ event.event_date.strftime('%d') }}</div>
+                                    <div class="text-white-50" style="font-size:0.7rem;">{{ event.event_date.strftime('%b') }}</div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1" style="font-size:0.9rem;">{{ event.title }}</h6>
+                                {% if event.venue %}
+                                <small class="text-muted d-block"><i class="bi bi-geo-alt me-1"></i>{{ event.venue }}</small>
+                                {% endif %}
+                                {% if event.description %}
+                                <small class="text-muted">{{ event.description | truncate(100, True) }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- FAQs -->
+                {% if dept.faqs %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h3 class="fw-bold mb-3">
+                            <i class="bi bi-question-circle text-primary me-2"></i>Frequently Asked Questions
+                        </h3>
+                        <div class="accordion" id="deptFaqAccordion">
+                            {% for faq in dept.faqs %}
+                            <div class="accordion-item border-0 {% if not loop.last %}mb-2{% endif %}">
+                                <h2 class="accordion-header" id="faqHead{{ faq.id }}">
+                                    <button class="accordion-button {% if not loop.first %}collapsed{% endif %} fw-bold" type="button"
+                                            data-bs-toggle="collapse" data-bs-target="#faqBody{{ faq.id }}"
+                                            aria-expanded="{{ 'true' if loop.first else 'false' }}" aria-controls="faqBody{{ faq.id }}"
+                                            style="font-size:0.9rem;background:var(--bg-body);">
+                                        {{ faq.question }}
+                                    </button>
+                                </h2>
+                                <div id="faqBody{{ faq.id }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
+                                     aria-labelledby="faqHead{{ faq.id }}" data-bs-parent="#deptFaqAccordion">
+                                    <div class="accordion-body text-muted" style="font-size:0.9rem;">
+                                        {{ faq.answer }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Gallery -->
+                {% if dept.gallery_albums %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h3 class="fw-bold mb-3">
+                            <i class="bi bi-images text-primary me-2"></i>Gallery
+                        </h3>
+                        {% for album in dept.gallery_albums %}
+                        <h6 class="fw-bold mb-2">{{ album.title }}</h6>
+                        {% if album.description %}
+                        <p class="text-muted small mb-2">{{ album.description }}</p>
+                        {% endif %}
+                        <div class="row g-2 {% if not loop.last %}mb-4{% endif %}">
+                            {% for image in album.images[:8] %}
+                            <div class="col-4 col-md-3">
+                                <a href="{{ image.image }}" target="_blank">
+                                    <img src="{{ image.image }}" alt="{{ image.title or album.title }}"
+                                         class="img-fluid rounded-3" style="width:100%;height:100px;object-fit:cover;" loading="lazy">
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Downloads -->
+                {% if dept.downloads %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h3 class="fw-bold mb-3">
+                            <i class="bi bi-download text-primary me-2"></i>Downloads
+                        </h3>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Category</th>
+                                        <th>Type</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for dl in dept.downloads[:10] %}
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold" style="font-size:0.9rem;">{{ dl.title }}</div>
+                                            {% if dl.description %}
+                                            <small class="text-muted">{{ dl.description | truncate(60, True) }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td><span class="badge bg-primary bg-opacity-10 text-primary">{{ dl.category | replace('_', ' ') | title }}</span></td>
+                                        <td><small class="text-muted">{{ dl.file_type or '' }}</small></td>
+                                        <td>
+                                            <a href="{{ dl.file_path }}" class="btn btn-sm btn-outline-primary" download>
+                                                <i class="bi bi-download"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Department Image -->
+                {% if dept.image %}
+                <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+                    <img src="{{ dept.image }}" alt="{{ dept.name }}" class="img-fluid" style="width:100%;max-height:250px;object-fit:cover;">
+                </div>
+                {% endif %}
+
+                <!-- HOD Card -->
+                {% if dept.hod_name %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4 text-center">
+                        <h5 class="fw-bold mb-3">Head of Department</h5>
+                        {% if dept.hod_image %}
+                        <img src="{{ dept.hod_image }}" alt="{{ dept.hod_name }}"
+                             class="rounded-circle mb-3" style="width:120px;height:120px;object-fit:cover;border:3px solid var(--primary);">
+                        {% else %}
+                        <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center gradient-primary" style="width:120px;height:120px;">
+                            <i class="bi bi-person display-5 text-white"></i>
+                        </div>
+                        {% endif %}
+                        <h5 class="fw-bold mb-1">{{ dept.hod_name }}</h5>
+                        <span class="badge bg-primary bg-opacity-10 text-primary mb-3">HOD - {{ dept.name }}</span>
+                        {% if dept.hod_email %}
+                        <p class="text-muted small mb-1">
+                            <i class="bi bi-envelope me-1"></i>
+                            <a href="mailto:{{ dept.hod_email }}" class="text-muted">{{ dept.hod_email }}</a>
+                        </p>
+                        {% endif %}
+                        {% if dept.hod_phone %}
+                        <p class="text-muted small mb-0">
+                            <i class="bi bi-telephone me-1"></i>
+                            <a href="tel:{{ dept.hod_phone }}" class="text-muted">{{ dept.hod_phone }}</a>
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- HOD Message -->
+                {% if dept.hod_message %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3">
+                            <i class="bi bi-chat-quote text-primary me-2"></i>HOD's Message
+                        </h5>
+                        <div class="text-muted" style="font-style:italic;line-height:1.8;font-size:0.9rem;">
+                            {{ dept.hod_message | markdown }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Quick Stats -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3">
+                            <i class="bi bi-bar-chart text-primary me-2"></i>At a Glance
+                        </h5>
+                        <ul class="list-unstyled mb-0">
+                            {% if dept.programs %}
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">Programs</span>
+                                <span class="fw-bold">{{ dept.programs|length }}</span>
+                            </li>
+                            {% endif %}
+                            {% if dept.subjects %}
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">Subjects</span>
+                                <span class="fw-bold">{{ dept.subjects|length }}</span>
+                            </li>
+                            {% endif %}
+                            {% if dept.news_articles %}
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">News Articles</span>
+                                <span class="fw-bold">{{ dept.news_articles|length }}</span>
+                            </li>
+                            {% endif %}
+                            {% if dept.events %}
+                            <li class="d-flex justify-content-between py-2 border-bottom">
+                                <span class="text-muted">Events</span>
+                                <span class="fw-bold">{{ dept.events|length }}</span>
+                            </li>
+                            {% endif %}
+                            {% if dept.downloads %}
+                            <li class="d-flex justify-content-between py-2">
+                                <span class="text-muted">Downloads</span>
+                                <span class="fw-bold">{{ dept.downloads|length }}</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3">
+                            <i class="bi bi-link-45deg text-primary me-2"></i>Quick Links
+                        </h5>
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('cms.page', slug='admission') }}" class="btn btn-outline-primary btn-sm text-start">
+                                <i class="bi bi-pencil-square me-2"></i>Admissions
+                            </a>
+                            <a href="{{ url_for('cms.page', slug='downloads') }}" class="btn btn-outline-primary btn-sm text-start">
+                                <i class="bi bi-download me-2"></i>Downloads
+                            </a>
+                            <a href="{{ url_for('cms.page', slug='contact') }}" class="btn btn-outline-primary btn-sm text-start">
+                                <i class="bi bi-telephone me-2"></i>Contact Us
+                            </a>
+                            <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-sm text-start">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Student Portal
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

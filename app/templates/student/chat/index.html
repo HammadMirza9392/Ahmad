@@ -1,0 +1,779 @@
+{% extends "layouts/student.html" %}
+
+{% block title %}AI Chat{% endblock %}
+{% block page_title %}AI Chat{% endblock %}
+
+{% block content %}
+<style>
+/* ── Chat Layout ── */
+.chat-wrapper {
+    display:flex; height:calc(100vh - 140px); margin:-1.5rem; border-radius:.75rem; overflow:hidden;
+    background:var(--bs-body-bg);
+}
+
+/* ── Sidebar ── */
+.chat-sidebar {
+    width:320px; min-width:320px; border-right:1px solid rgba(0,0,0,.08);
+    display:flex; flex-direction:column; background:#fff;
+}
+[data-theme="dark"] .chat-sidebar { background:#1a1d21; border-color:rgba(255,255,255,.06); }
+
+.chat-sidebar-header { padding:1rem 1.25rem; border-bottom:1px solid rgba(0,0,0,.06); }
+[data-theme="dark"] .chat-sidebar-header { border-color:rgba(255,255,255,.06); }
+
+.chat-sidebar-list { flex:1; overflow-y:auto; padding:.5rem; }
+.chat-sidebar-list::-webkit-scrollbar { width:4px; }
+.chat-sidebar-list::-webkit-scrollbar-thumb { background:rgba(0,0,0,.15); border-radius:4px; }
+
+.chat-session-item {
+    display:flex; align-items:center; gap:.75rem; padding:.75rem 1rem; border-radius:.5rem;
+    cursor:pointer; transition:all .15s; text-decoration:none; color:inherit; position:relative;
+}
+.chat-session-item:hover { background:rgba(102,126,234,.06); color:inherit; }
+.chat-session-item.active { background:rgba(102,126,234,.12); color:#667eea; }
+.chat-session-item .session-title { flex:1; font-size:.875rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.chat-session-item .session-date { font-size:.7rem; color:#999; white-space:nowrap; }
+.chat-session-item .session-actions { display:none; gap:.25rem; }
+.chat-session-item:hover .session-actions { display:flex; }
+.chat-session-item:hover .session-date { display:none; }
+.session-actions .btn { padding:.15rem .35rem; font-size:.75rem; line-height:1; }
+
+/* ── Main Chat Area ── */
+.chat-main { flex:1; display:flex; flex-direction:column; min-width:0; background:#f8f9fb; }
+[data-theme="dark"] .chat-main { background:#111318; }
+
+.chat-messages { flex:1; overflow-y:auto; padding:1.5rem; display:flex; flex-direction:column; gap:1rem; }
+.chat-messages::-webkit-scrollbar { width:5px; }
+.chat-messages::-webkit-scrollbar-thumb { background:rgba(0,0,0,.12); border-radius:4px; }
+
+/* ── Messages ── */
+.msg-row { display:flex; gap:.75rem; max-width:85%; animation:msgIn .25s ease; }
+.msg-row.user { margin-left:auto; flex-direction:row-reverse; }
+.msg-row.assistant { margin-right:auto; }
+
+@keyframes msgIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+.msg-avatar {
+    width:34px; height:34px; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; flex-shrink:0; font-size:.85rem; font-weight:600;
+}
+.msg-row.user .msg-avatar { background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; }
+.msg-row.assistant .msg-avatar { background:linear-gradient(135deg,#10b981,#059669); color:#fff; }
+
+.msg-bubble {
+    padding:.85rem 1.15rem; border-radius:1rem; font-size:.9rem; line-height:1.65;
+    position:relative; word-wrap:break-word;
+}
+.msg-row.user .msg-bubble { background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border-bottom-right-radius:.25rem; }
+.msg-row.assistant .msg-bubble { background:#fff; border:1px solid rgba(0,0,0,.06); border-bottom-left-radius:.25rem; }
+[data-theme="dark"] .msg-row.assistant .msg-bubble { background:#1e2128; border-color:rgba(255,255,255,.06); color:#e1e4e8; }
+
+/* Markdown in assistant messages */
+.msg-bubble h1,.msg-bubble h2,.msg-bubble h3,.msg-bubble h4 { margin-top:.75rem; margin-bottom:.35rem; }
+.msg-bubble p { margin-bottom:.5rem; }
+.msg-bubble p:last-child { margin-bottom:0; }
+.msg-bubble ul,.msg-bubble ol { padding-left:1.25rem; margin-bottom:.5rem; }
+.msg-bubble blockquote { border-left:3px solid #667eea; padding-left:.75rem; margin:.5rem 0; opacity:.85; }
+.msg-bubble table { width:100%; border-collapse:collapse; margin:.5rem 0; font-size:.85rem; }
+.msg-bubble th,.msg-bubble td { border:1px solid rgba(0,0,0,.1); padding:.35rem .6rem; }
+.msg-bubble th { background:rgba(0,0,0,.04); }
+
+/* Code blocks */
+.msg-bubble pre { position:relative; margin:.5rem 0; border-radius:.5rem; overflow:hidden; }
+.msg-bubble pre code { display:block; padding:1rem; font-size:.82rem; overflow-x:auto; background:#1e1e2e; color:#cdd6f4; border-radius:.5rem; }
+.msg-bubble code:not(pre code) { background:rgba(102,126,234,.1); color:#667eea; padding:.1rem .35rem; border-radius:.25rem; font-size:.82rem; }
+[data-theme="dark"] .msg-bubble code:not(pre code) { background:rgba(102,126,234,.2); }
+
+.code-header { display:flex; align-items:center; justify-content:space-between; padding:.35rem .75rem; background:#181825; color:#a6adc8; font-size:.75rem; border-radius:.5rem .5rem 0 0; }
+.code-header + code { border-radius:0 0 .5rem .5rem !important; }
+.copy-code-btn { background:none; border:none; color:#a6adc8; cursor:pointer; font-size:.75rem; padding:.15rem .4rem; border-radius:.25rem; }
+.copy-code-btn:hover { background:rgba(255,255,255,.1); color:#fff; }
+
+/* Message feedback */
+.msg-feedback { display:flex; gap:.35rem; margin-top:.4rem; }
+.msg-feedback .btn { padding:.1rem .4rem; font-size:.7rem; border-radius:.25rem; opacity:.5; }
+.msg-feedback .btn:hover { opacity:1; }
+.msg-feedback .btn.active { opacity:1; }
+
+/* Resource files */
+.msg-resources { margin-top:.5rem; }
+.msg-resources .badge { font-weight:500; }
+
+/* ── Typing indicator ── */
+.typing-indicator { display:flex; align-items:center; gap:.35rem; padding:.5rem .75rem; }
+.typing-indicator span { width:7px; height:7px; background:#667eea; border-radius:50%; animation:blink 1.4s infinite both; }
+.typing-indicator span:nth-child(2) { animation-delay:.2s; }
+.typing-indicator span:nth-child(3) { animation-delay:.4s; }
+@keyframes blink { 0%,80%,100%{opacity:.3;transform:scale(.8)} 40%{opacity:1;transform:scale(1)} }
+
+/* ── Input Area ── */
+.chat-input-area {
+    padding:1rem 1.5rem; border-top:1px solid rgba(0,0,0,.06); background:#fff;
+}
+[data-theme="dark"] .chat-input-area { background:#1a1d21; border-color:rgba(255,255,255,.06); }
+
+.chat-input-box {
+    display:flex; align-items:flex-end; gap:.5rem; background:#f1f3f5; border-radius:1rem;
+    padding:.5rem .5rem .5rem 1rem; border:2px solid transparent; transition:border-color .2s;
+}
+.chat-input-box:focus-within { border-color:#667eea; background:#fff; }
+[data-theme="dark"] .chat-input-box { background:#2a2d35; }
+[data-theme="dark"] .chat-input-box:focus-within { background:#1e2128; }
+
+.chat-input-box textarea {
+    flex:1; border:none; background:none; outline:none; resize:none; font-size:.9rem;
+    max-height:120px; line-height:1.5; padding:.25rem 0; color:inherit;
+}
+
+.chat-send-btn {
+    width:40px; height:40px; border-radius:50%; border:none; background:linear-gradient(135deg,#667eea,#764ba2);
+    color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer;
+    transition:transform .15s, opacity .15s; flex-shrink:0;
+}
+.chat-send-btn:hover { transform:scale(1.05); }
+.chat-send-btn:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+.chat-send-btn.stop { background:linear-gradient(135deg,#dc3545,#c82333); }
+
+/* ── Welcome Screen ── */
+.chat-welcome { display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; text-align:center; padding:2rem; }
+.chat-welcome-icon { font-size:4rem; opacity:.12; margin-bottom:1rem; }
+
+/* ── Mobile Responsive ── */
+.chat-sidebar-toggle { display:none; }
+@media (max-width: 768px) {
+    .chat-sidebar { position:fixed; left:-320px; top:0; bottom:0; z-index:1050; transition:left .3s; box-shadow:2px 0 12px rgba(0,0,0,.15); }
+    .chat-sidebar.show { left:0; }
+    .chat-sidebar-toggle { display:inline-flex; }
+    .chat-sidebar-overlay { display:none; position:fixed; inset:0; z-index:1040; background:rgba(0,0,0,.3); }
+    .chat-sidebar-overlay.show { display:block; }
+    .msg-row { max-width:95%; }
+}
+
+/* ── Rename modal ── */
+.rename-input { border:1px solid #667eea; border-radius:.375rem; }
+</style>
+
+<!-- Mobile sidebar overlay -->
+<div class="chat-sidebar-overlay" id="chatSidebarOverlay"></div>
+
+<div class="chat-wrapper">
+    <!-- ─── Sidebar ─── -->
+    <div class="chat-sidebar" id="chatSidebar">
+        <div class="chat-sidebar-header">
+            <form action="{{ url_for('student.chat_new') }}" method="POST" class="mb-2">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-plus-lg me-2"></i>New Chat
+                </button>
+            </form>
+            <div class="position-relative">
+                <i class="bi bi-search position-absolute" style="left:.75rem;top:50%;transform:translateY(-50%);color:#999;font-size:.85rem;"></i>
+                <input type="text" id="chatSearch" class="form-control form-control-sm ps-5" placeholder="Search chats..." style="border-radius:.5rem;background:#f1f3f5;border:none;">
+            </div>
+        </div>
+        <div class="chat-sidebar-list" id="chatSessionList">
+            {% if sessions %}
+                {% for s in sessions %}
+                <a href="{{ url_for('student.chat', session_id=s.id) }}"
+                   class="chat-session-item {{ 'active' if current_session and current_session.id == s.id }}"
+                   data-id="{{ s.id }}" data-title="{{ s.title or 'New Chat' }}">
+                    <i class="bi {{ 'bi-bookmark-fill text-warning' if s.is_bookmarked else 'bi-chat-dots' }}" style="font-size:1rem;flex-shrink:0;"></i>
+                    <span class="session-title">{{ s.title or 'New Chat' }}</span>
+                    <span class="session-date">{{ s.updated_at.strftime('%b %d') if s.updated_at else '' }}</span>
+                    <div class="session-actions">
+                        <button class="btn btn-sm btn-outline-secondary rename-btn" data-id="{{ s.id }}" data-title="{{ s.title or 'New Chat' }}" title="Rename" onclick="event.preventDefault();event.stopPropagation();renameChat({{ s.id }},'{{ (s.title or "New Chat")|e }}');">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning bookmark-btn" data-id="{{ s.id }}" title="Bookmark" onclick="event.preventDefault();event.stopPropagation();bookmarkChat({{ s.id }});">
+                            <i class="bi {{ 'bi-bookmark-fill' if s.is_bookmarked else 'bi-bookmark' }}"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger delete-btn" data-id="{{ s.id }}" title="Delete" onclick="event.preventDefault();event.stopPropagation();deleteChat({{ s.id }});">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-chat-dots" style="font-size:2rem;opacity:.3;"></i>
+                    <p class="mt-2 small">No conversations yet</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ─── Main Chat ─── -->
+    <div class="chat-main">
+        {% if current_session %}
+        <!-- Messages -->
+        <div class="chat-messages" id="chatMessages">
+            {% if messages %}
+                {% for msg in messages %}
+                <div class="msg-row {{ msg.role }}" data-msg-id="{{ msg.id }}">
+                    <div class="msg-avatar">
+                        {% if msg.role == 'user' %}
+                        {{ current_user.full_name[0]|upper }}
+                        {% else %}
+                        <i class="bi bi-robot"></i>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="msg-bubble {% if msg.role == 'assistant' %}markdown-body{% endif %}">
+                            {% if msg.role == 'assistant' %}
+                            <div class="rendered-md">{{ msg.content }}</div>
+                            {% else %}
+                            {{ msg.content }}
+                            {% endif %}
+                        </div>
+                        {% if msg.role == 'assistant' %}
+                        <div class="msg-feedback">
+                            <button class="btn btn-outline-success btn-sm feedback-btn {{ 'active' if msg.is_liked == true }}"
+                                    onclick="feedbackMsg({{ msg.id }}, true)" title="Helpful">
+                                <i class="bi bi-hand-thumbs-up"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm feedback-btn {{ 'active' if msg.is_liked == false }}"
+                                    onclick="feedbackMsg({{ msg.id }}, false)" title="Not helpful">
+                                <i class="bi bi-hand-thumbs-down"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="copyMessage(this)" title="Copy">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <!-- Typing indicator (hidden) -->
+        <div id="typingIndicator" class="d-none px-4 pb-2">
+            <div class="msg-row assistant">
+                <div class="msg-avatar"><i class="bi bi-robot"></i></div>
+                <div class="msg-bubble">
+                    <div class="typing-indicator">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="chat-input-area">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <button class="btn btn-sm btn-outline-secondary chat-sidebar-toggle" id="mobileSidebarBtn">
+                    <i class="bi bi-layout-sidebar-inset"></i>
+                </button>
+                <span class="text-muted small ms-auto d-none d-md-inline" id="responseTime"></span>
+            </div>
+            <div class="chat-input-box">
+                <textarea id="chatInput" rows="1" placeholder="Type your message..." autofocus></textarea>
+                <button class="chat-send-btn" id="sendBtn" title="Send message">
+                    <i class="bi bi-send-fill"></i>
+                </button>
+            </div>
+            <div class="text-center mt-1">
+                <small class="text-muted" style="font-size:.7rem;">AI can make mistakes. Please verify important information.</small>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Welcome / No session selected -->
+        <div class="chat-welcome">
+            <div class="chat-welcome-icon"><i class="bi bi-chat-dots-fill"></i></div>
+            <h3 class="fw-bold mb-2">AI Learning Assistant</h3>
+            <p class="text-muted mb-4" style="max-width:420px;">
+                Ask questions about your subjects, get explanations, solve problems, and learn with the power of AI.
+            </p>
+            <div class="row g-3 justify-content-center" style="max-width:600px;">
+                <div class="col-6">
+                    <div class="card border-0 bg-light h-100 suggestion-card" style="cursor:pointer;" onclick="quickStart('Explain the key concepts of')">
+                        <div class="card-body p-3 text-center">
+                            <i class="bi bi-lightbulb text-warning mb-2" style="font-size:1.5rem;"></i>
+                            <div class="small fw-semibold">Explain a Concept</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card border-0 bg-light h-100 suggestion-card" style="cursor:pointer;" onclick="quickStart('Help me solve this problem:')">
+                        <div class="card-body p-3 text-center">
+                            <i class="bi bi-calculator text-primary mb-2" style="font-size:1.5rem;"></i>
+                            <div class="small fw-semibold">Solve a Problem</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card border-0 bg-light h-100 suggestion-card" style="cursor:pointer;" onclick="quickStart('Summarize the topic of')">
+                        <div class="card-body p-3 text-center">
+                            <i class="bi bi-journal-text text-success mb-2" style="font-size:1.5rem;"></i>
+                            <div class="small fw-semibold">Summarize a Topic</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card border-0 bg-light h-100 suggestion-card" style="cursor:pointer;" onclick="quickStart('Create practice questions about')">
+                        <div class="card-body p-3 text-center">
+                            <i class="bi bi-patch-question text-danger mb-2" style="font-size:1.5rem;"></i>
+                            <div class="small fw-semibold">Practice Questions</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <form action="{{ url_for('student.chat_new') }}" method="POST" class="mt-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-primary btn-lg px-5">
+                    <i class="bi bi-plus-lg me-2"></i>Start New Chat
+                </button>
+            </form>
+            <button class="btn btn-sm btn-outline-secondary mt-3 chat-sidebar-toggle" id="mobileSidebarBtn2">
+                <i class="bi bi-layout-sidebar-inset me-1"></i>Show Chat History
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Rename Modal -->
+<div class="modal fade" id="renameModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h6 class="modal-title fw-bold">Rename Chat</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="renameInput" class="form-control rename-input" placeholder="Chat title" maxlength="100">
+                <input type="hidden" id="renameSessionId">
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-sm btn-primary" onclick="submitRename()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Marked.js for markdown -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<!-- Highlight.js for code -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+
+<script>
+(function(){
+    /* ── Constants ── */
+    const CSRF = document.querySelector('meta[name="csrf-token"]')?.content;
+    const SEND_URL = "{{ url_for('student.chat_send') }}";
+    const STREAM_URL = "{{ url_for('student.chat_stream') }}";
+    const RENAME_URL = "{{ url_for('student.chat_rename') }}";
+    const BOOKMARK_URL = "{{ url_for('student.chat_bookmark') }}";
+    const FEEDBACK_URL = "{{ url_for('student.chat_feedback') }}";
+    const SESSION_ID = {{ current_session.id if current_session else 'null' }};
+
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const typingEl = document.getElementById('typingIndicator');
+    const responseTimeEl = document.getElementById('responseTime');
+
+    let isStreaming = false;
+    let abortCtrl = null;
+
+    /* ── Configure Marked ── */
+    if (typeof marked !== 'undefined') {
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (typeof hljs !== 'undefined' && lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, {language: lang}).value;
+                }
+                return typeof hljs !== 'undefined' ? hljs.highlightAuto(code).value : code;
+            },
+            breaks: true,
+            gfm: true
+        });
+    }
+
+    /* ── Render Markdown with code block headers ── */
+    function renderMarkdown(text) {
+        if (typeof marked === 'undefined') return text.replace(/\n/g, '<br>');
+        let html = marked.parse(text);
+        /* Add copy button to code blocks */
+        html = html.replace(/<pre><code( class="language-(\w+)")?>/g, function(match, cls, lang) {
+            const label = lang || 'code';
+            return `<pre><div class="code-header"><span>${label}</span><button class="copy-code-btn" onclick="copyCode(this)"><i class="bi bi-clipboard me-1"></i>Copy</button></div><code${cls || ''}>`;
+        });
+        return html;
+    }
+
+    /* ── Render existing assistant messages ── */
+    document.querySelectorAll('.msg-row.assistant .rendered-md').forEach(el => {
+        const raw = el.textContent;
+        el.innerHTML = renderMarkdown(raw);
+    });
+
+    /* ── Auto-resize textarea ── */
+    if (chatInput) {
+        chatInput.addEventListener('input', () => {
+            chatInput.style.height = 'auto';
+            chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+        });
+
+        /* Send on Enter (Shift+Enter for newline) */
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!isStreaming) sendMessage();
+            }
+        });
+    }
+
+    /* ── Send button ── */
+    if (sendBtn) {
+        sendBtn.addEventListener('click', () => {
+            if (isStreaming) {
+                stopStreaming();
+            } else {
+                sendMessage();
+            }
+        });
+    }
+
+    /* ── Scroll to bottom ── */
+    function scrollBottom() {
+        if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    scrollBottom();
+
+    /* ── Add message to UI ── */
+    function addMessage(role, content, msgId) {
+        if (!chatMessages) return null;
+        const row = document.createElement('div');
+        row.className = `msg-row ${role}`;
+        if (msgId) row.dataset.msgId = msgId;
+
+        const avatarContent = role === 'user'
+            ? '{{ current_user.full_name[0]|upper if current_user.is_authenticated else "S" }}'
+            : '<i class="bi bi-robot"></i>';
+
+        let feedbackHtml = '';
+        if (role === 'assistant') {
+            feedbackHtml = `
+            <div class="msg-feedback">
+                <button class="btn btn-outline-success btn-sm feedback-btn" onclick="feedbackMsg(${msgId}, true)" title="Helpful">
+                    <i class="bi bi-hand-thumbs-up"></i>
+                </button>
+                <button class="btn btn-outline-danger btn-sm feedback-btn" onclick="feedbackMsg(${msgId}, false)" title="Not helpful">
+                    <i class="bi bi-hand-thumbs-down"></i>
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" onclick="copyMessage(this)" title="Copy">
+                    <i class="bi bi-clipboard"></i>
+                </button>
+            </div>`;
+        }
+
+        const bubbleContent = role === 'assistant' ? renderMarkdown(content) : escapeHtml(content);
+
+        row.innerHTML = `
+            <div class="msg-avatar">${avatarContent}</div>
+            <div>
+                <div class="msg-bubble ${role === 'assistant' ? 'markdown-body' : ''}">${bubbleContent}</div>
+                ${feedbackHtml}
+            </div>`;
+        chatMessages.appendChild(row);
+        scrollBottom();
+        return row;
+    }
+
+    function escapeHtml(text) {
+        const d = document.createElement('div');
+        d.textContent = text;
+        return d.innerHTML;
+    }
+
+    /* ── Send message via streaming ── */
+    async function sendMessage() {
+        if (!chatInput || !SESSION_ID) return;
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        chatInput.value = '';
+        chatInput.style.height = 'auto';
+
+        /* Add user message */
+        addMessage('user', message);
+
+        /* Show typing */
+        isStreaming = true;
+        sendBtn.innerHTML = '<i class="bi bi-stop-fill"></i>';
+        sendBtn.classList.add('stop');
+        sendBtn.title = 'Stop generating';
+        if (typingEl) typingEl.classList.remove('d-none');
+        scrollBottom();
+
+        const startTime = Date.now();
+        const subjectId = null;
+
+        try {
+            /* Try streaming first */
+            abortCtrl = new AbortController();
+            const res = await fetch(STREAM_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
+                body: JSON.stringify({session_id: SESSION_ID, message: message, subject_id: subjectId}),
+                signal: abortCtrl.signal
+            });
+
+            if (!res.ok) throw new Error('Stream failed');
+
+            if (typingEl) typingEl.classList.add('d-none');
+
+            /* Create assistant message row */
+            const assistantRow = document.createElement('div');
+            assistantRow.className = 'msg-row assistant';
+            assistantRow.innerHTML = `
+                <div class="msg-avatar"><i class="bi bi-robot"></i></div>
+                <div>
+                    <div class="msg-bubble markdown-body"></div>
+                    <div class="msg-feedback">
+                        <button class="btn btn-outline-success btn-sm feedback-btn" title="Helpful">
+                            <i class="bi bi-hand-thumbs-up"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm feedback-btn" title="Not helpful">
+                            <i class="bi bi-hand-thumbs-down"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="copyMessage(this)" title="Copy">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                </div>`;
+            chatMessages.appendChild(assistantRow);
+            const bubble = assistantRow.querySelector('.msg-bubble');
+
+            let fullText = '';
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, {stream: true});
+                const lines = chunk.split('\n');
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const data = line.slice(6);
+                        if (data === '[DONE]') break;
+                        fullText += data;
+                        bubble.innerHTML = renderMarkdown(fullText);
+                        scrollBottom();
+                    }
+                }
+            }
+
+            /* Show response time */
+            const elapsed = Date.now() - startTime;
+            if (responseTimeEl) responseTimeEl.textContent = `${(elapsed/1000).toFixed(1)}s`;
+
+        } catch(e) {
+            if (e.name === 'AbortError') {
+                /* User stopped */
+            } else {
+                /* Fallback to non-streaming */
+                try {
+                    const res2 = await fetch(SEND_URL, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
+                        body: JSON.stringify({session_id: SESSION_ID, message: message, subject_id: subjectId})
+                    });
+                    const data = await res2.json();
+                    if (typingEl) typingEl.classList.add('d-none');
+
+                    if (data.error) {
+                        addMessage('assistant', 'Error: ' + data.error);
+                    } else {
+                        addMessage('assistant', data.response || 'No response.');
+
+                        /* Show resource files */
+                        if (data.resource_files && data.resource_files.length > 0) {
+                            const lastRow = chatMessages.lastElementChild;
+                            const resDiv = document.createElement('div');
+                            resDiv.className = 'msg-resources mt-2';
+                            resDiv.innerHTML = '<small class="text-muted">Sources: </small>' +
+                                data.resource_files.map(f => `<span class="badge bg-light text-dark me-1">${f}</span>`).join('');
+                            lastRow.querySelector('.msg-bubble').appendChild(resDiv);
+                        }
+
+                        const elapsed2 = Date.now() - startTime;
+                        if (responseTimeEl) {
+                            responseTimeEl.textContent = `${(elapsed2/1000).toFixed(1)}s`;
+                            if (data.provider) responseTimeEl.textContent += ` via ${data.provider}`;
+                        }
+                    }
+                } catch(e2) {
+                    if (typingEl) typingEl.classList.add('d-none');
+                    addMessage('assistant', 'Failed to get response. Please try again.');
+                }
+            }
+        }
+
+        /* Reset state */
+        isStreaming = false;
+        abortCtrl = null;
+        sendBtn.innerHTML = '<i class="bi bi-send-fill"></i>';
+        sendBtn.classList.remove('stop');
+        sendBtn.title = 'Send message';
+        if (typingEl) typingEl.classList.add('d-none');
+    }
+
+    function stopStreaming() {
+        if (abortCtrl) abortCtrl.abort();
+        isStreaming = false;
+    }
+
+    /* ── Quick start (welcome screen) ── */
+    window.quickStart = function(prompt) {
+        /* Create new chat first, then redirect */
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{{ url_for('student.chat_new') }}";
+        form.innerHTML = `<input type="hidden" name="csrf_token" value="${CSRF}">`;
+        document.body.appendChild(form);
+        form.submit();
+    };
+
+    /* ── Search chats ── */
+    const searchInput = document.getElementById('chatSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const q = searchInput.value.toLowerCase();
+            document.querySelectorAll('.chat-session-item').forEach(item => {
+                const title = item.dataset.title?.toLowerCase() || '';
+                item.style.display = title.includes(q) ? '' : 'none';
+            });
+        });
+    }
+
+    /* ── Mobile sidebar ── */
+    const sidebar = document.getElementById('chatSidebar');
+    const overlay = document.getElementById('chatSidebarOverlay');
+    document.querySelectorAll('#mobileSidebarBtn, #mobileSidebarBtn2').forEach(btn => {
+        if (btn) btn.addEventListener('click', () => {
+            sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+        });
+    });
+    if (overlay) overlay.addEventListener('click', () => {
+        sidebar.classList.remove('show');
+        overlay.classList.remove('show');
+    });
+})();
+
+/* ── Global functions ── */
+const CSRF = document.querySelector('meta[name="csrf-token"]')?.content;
+
+function renameChat(sessionId, currentTitle) {
+    document.getElementById('renameSessionId').value = sessionId;
+    document.getElementById('renameInput').value = currentTitle;
+    new bootstrap.Modal(document.getElementById('renameModal')).show();
+}
+
+function submitRename() {
+    const sessionId = document.getElementById('renameSessionId').value;
+    const title = document.getElementById('renameInput').value.trim();
+    if (!title) return;
+
+    fetch("{{ url_for('student.chat_rename') }}", {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
+        body: JSON.stringify({session_id: parseInt(sessionId), title: title})
+    }).then(res => res.json()).then(data => {
+        if (data.status === 'ok') {
+            /* Update sidebar item */
+            const item = document.querySelector(`.chat-session-item[data-id="${sessionId}"]`);
+            if (item) {
+                item.querySelector('.session-title').textContent = title;
+                item.dataset.title = title;
+            }
+            bootstrap.Modal.getInstance(document.getElementById('renameModal')).hide();
+        }
+    });
+}
+
+function bookmarkChat(sessionId) {
+    fetch("{{ url_for('student.chat_bookmark') }}", {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
+        body: JSON.stringify({session_id: sessionId})
+    }).then(res => res.json()).then(data => {
+        if (data.status === 'ok') {
+            const item = document.querySelector(`.chat-session-item[data-id="${sessionId}"]`);
+            if (item) {
+                const icon = item.querySelector(':scope > i');
+                const bmBtn = item.querySelector('.bookmark-btn i');
+                if (icon.classList.contains('bi-bookmark-fill')) {
+                    icon.classList.replace('bi-bookmark-fill', 'bi-chat-dots');
+                    icon.classList.remove('text-warning');
+                    if (bmBtn) bmBtn.classList.replace('bi-bookmark-fill', 'bi-bookmark');
+                } else {
+                    icon.classList.replace('bi-chat-dots', 'bi-bookmark-fill');
+                    icon.classList.add('text-warning');
+                    if (bmBtn) bmBtn.classList.replace('bi-bookmark', 'bi-bookmark-fill');
+                }
+            }
+        }
+    });
+}
+
+function deleteChat(sessionId) {
+    if (!confirm('Delete this chat? This action cannot be undone.')) return;
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/student/chat/delete/${sessionId}`;
+    form.innerHTML = `<input type="hidden" name="csrf_token" value="${CSRF}">`;
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function feedbackMsg(messageId, isLiked) {
+    fetch("{{ url_for('student.chat_feedback') }}", {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
+        body: JSON.stringify({message_id: messageId, is_liked: isLiked})
+    }).then(res => res.json()).then(data => {
+        if (data.status === 'ok') {
+            const row = document.querySelector(`.msg-row[data-msg-id="${messageId}"]`);
+            if (row) {
+                row.querySelectorAll('.feedback-btn').forEach(btn => btn.classList.remove('active'));
+                const idx = isLiked ? 0 : 1;
+                row.querySelectorAll('.feedback-btn')[idx]?.classList.add('active');
+            }
+        }
+    });
+}
+
+function copyMessage(btn) {
+    const bubble = btn.closest('.msg-row')?.querySelector('.msg-bubble');
+    if (bubble) {
+        navigator.clipboard.writeText(bubble.innerText).then(() => {
+            const icon = btn.querySelector('i');
+            icon.classList.replace('bi-clipboard', 'bi-check');
+            setTimeout(() => icon.classList.replace('bi-check', 'bi-clipboard'), 1500);
+        });
+    }
+}
+
+function copyCode(btn) {
+    const codeBlock = btn.closest('pre')?.querySelector('code');
+    if (codeBlock) {
+        navigator.clipboard.writeText(codeBlock.innerText).then(() => {
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check me-1"></i>Copied';
+            setTimeout(() => { btn.innerHTML = orig; }, 1500);
+        });
+    }
+}
+</script>
+{% endblock %}

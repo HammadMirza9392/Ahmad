@@ -1,0 +1,79 @@
+{% extends "layouts/cms.html" %}
+
+{% block title %}Departments{% endblock %}
+
+{% block content %}
+<!-- Page Banner -->
+<section class="hero-section" style="padding:3.5rem 0;">
+    <div class="container">
+        <h1 class="fw-bold mb-2">Our Departments</h1>
+        <p class="mb-0">
+            <a href="{{ url_for('cms.home') }}" class="text-white-50 text-decoration-none">Home</a>
+            <span class="mx-2 text-white-50">/</span>
+            <span>Departments</span>
+        </p>
+    </div>
+</section>
+
+<!-- Page Content -->
+{% if page and page.content %}
+<section class="py-4">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 text-center">
+                <div class="text-muted">{{ page.content | markdown }}</div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Departments Grid -->
+<section class="section pt-2">
+    <div class="container">
+        {% if departments %}
+        <div class="row g-4">
+            {% for dept in departments %}
+            <div class="col-md-6 col-lg-4">
+                <a href="{{ url_for('cms.department_detail', slug=dept.slug) }}" class="text-decoration-none">
+                    <div class="card dept-card h-100">
+                        {% if dept.image %}
+                        <img src="{{ dept.image }}" alt="{{ dept.name }}" loading="lazy">
+                        {% else %}
+                        <div class="d-flex align-items-center justify-content-center" style="height:200px;background:linear-gradient(135deg,var(--primary),var(--secondary));">
+                            <i class="bi bi-mortarboard display-4 text-white"></i>
+                        </div>
+                        {% endif %}
+                        <div class="dept-body">
+                            <h5 class="text-dark mb-2">{{ dept.name }}</h5>
+                            {% if dept.description %}
+                            <p class="text-muted small mb-2">{{ dept.description | truncate(120, True) }}</p>
+                            {% endif %}
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                {% if dept.programs %}
+                                <span class="badge bg-primary bg-opacity-10 text-primary">
+                                    <i class="bi bi-journal-bookmark me-1"></i>{{ dept.programs|length }} Program{{ 's' if dept.programs|length != 1 }}
+                                </span>
+                                {% endif %}
+                                {% if dept.hod_name %}
+                                <small class="text-muted">
+                                    <i class="bi bi-person me-1"></i>{{ dept.hod_name }}
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-building display-3 text-muted mb-3 d-block"></i>
+            <h4 class="text-muted">No departments available at the moment.</h4>
+            <p class="text-muted">Please check back later.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

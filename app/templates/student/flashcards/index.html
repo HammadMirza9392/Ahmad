@@ -1,0 +1,231 @@
+{% extends "layouts/student.html" %}
+
+{% block title %}Flashcards{% endblock %}
+{% block page_title %}AI Flashcards{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Setup Panel -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 pt-4 px-4">
+                <h5 class="fw-bold mb-1"><i class="bi bi-card-heading me-2 text-primary"></i>Generate Flashcards</h5>
+                <p class="text-muted small mb-0">AI-powered flashcards for effective studying</p>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Subject</label>
+                    <select id="fcSubject" class="form-select">
+                        <option value="">-- Select Subject --</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Topic (optional)</label>
+                    <input type="text" id="fcTopic" class="form-control" placeholder="e.g. Data Structures, Cell Biology">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Number of Cards</label>
+                    <select id="fcCount" class="form-select">
+                        <option value="5">5 Cards</option>
+                        <option value="10" selected>10 Cards</option>
+                        <option value="15">15 Cards</option>
+                        <option value="20">20 Cards</option>
+                    </select>
+                </div>
+                <button id="generateFcBtn" class="btn btn-primary w-100 btn-lg" disabled>
+                    <i class="bi bi-lightning-fill me-2"></i>Generate Cards
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div id="fcStats" class="card border-0 shadow-sm mt-3 d-none">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Progress</span>
+                    <span id="fcProgressText" class="fw-bold small">0/0</span>
+                </div>
+                <div class="progress mb-3" style="height:6px;">
+                    <div id="fcProgressBar" class="progress-bar bg-primary" style="width:0%"></div>
+                </div>
+                <div class="row text-center g-2">
+                    <div class="col-4">
+                        <div class="text-success fw-bold fs-5" id="fcKnown">0</div>
+                        <small class="text-muted">Known</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-danger fw-bold fs-5" id="fcUnknown">0</div>
+                        <small class="text-muted">Review</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-secondary fw-bold fs-5" id="fcRemaining">0</div>
+                        <small class="text-muted">Left</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flashcard Area -->
+    <div class="col-lg-8">
+        <div id="fcPlaceholder" class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <div style="font-size:4rem;opacity:.15;"><i class="bi bi-card-heading"></i></div>
+                <h5 class="text-muted mt-3">Ready to Study?</h5>
+                <p class="text-muted">Select a subject and generate flashcards to begin.</p>
+            </div>
+        </div>
+
+        <div id="fcLoading" class="card border-0 shadow-sm d-none">
+            <div class="card-body text-center py-5">
+                <div class="spinner-border text-primary mb-3" role="status"></div>
+                <h5 class="text-muted">Creating flashcards...</h5>
+            </div>
+        </div>
+
+        <div id="fcArea" class="d-none">
+            <!-- Flashcard -->
+            <div class="d-flex justify-content-center mb-4">
+                <div id="flashcard" class="position-relative" style="width:100%;max-width:540px;height:320px;cursor:pointer;perspective:1000px;" onclick="flipCard()">
+                    <div id="fcInner" style="position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d;">
+                        <!-- Front -->
+                        <div class="card border-0 shadow-sm d-flex align-items-center justify-content-center p-4"
+                             style="position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:1rem;">
+                            <div class="text-center">
+                                <span class="badge bg-primary mb-3">QUESTION</span>
+                                <h4 id="fcFront" class="fw-semibold"></h4>
+                            </div>
+                        </div>
+                        <!-- Back -->
+                        <div class="card border-0 shadow-sm d-flex align-items-center justify-content-center p-4"
+                             style="position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:1rem;transform:rotateY(180deg);background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;">
+                            <div class="text-center">
+                                <span class="badge bg-light text-dark mb-3">ANSWER</span>
+                                <h4 id="fcBack" class="fw-semibold"></h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="text-center text-muted small mb-3"><i class="bi bi-hand-index me-1"></i>Click card to flip</p>
+
+            <!-- Controls -->
+            <div class="d-flex justify-content-center gap-3">
+                <button id="fcUnknownBtn" class="btn btn-outline-danger btn-lg px-4" onclick="markCard(false)">
+                    <i class="bi bi-x-lg me-2"></i>Review Again
+                </button>
+                <button id="fcKnownBtn" class="btn btn-outline-success btn-lg px-4" onclick="markCard(true)">
+                    <i class="bi bi-check-lg me-2"></i>Got It
+                </button>
+            </div>
+        </div>
+
+        <!-- Completion -->
+        <div id="fcComplete" class="card border-0 shadow-sm d-none">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-check-circle-fill text-success" style="font-size:3rem;"></i>
+                <h4 class="fw-bold mt-3">Session Complete!</h4>
+                <p class="text-muted" id="fcFinalMsg"></p>
+                <button class="btn btn-primary mt-2" onclick="resetFlashcards()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Study Again
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const CSRF = document.querySelector('meta[name="csrf-token"]')?.content;
+let cards=[], cardIdx=0, known=0, unknown=0, flipped=false;
+
+const subjectSel = document.getElementById('fcSubject');
+const genBtn = document.getElementById('generateFcBtn');
+
+subjectSel.addEventListener('change', () => { genBtn.disabled = !subjectSel.value; });
+
+genBtn.addEventListener('click', async () => {
+    const subjectId = subjectSel.value;
+    const topic = document.getElementById('fcTopic').value.trim();
+    const count = document.getElementById('fcCount').value;
+
+    document.getElementById('fcPlaceholder').classList.add('d-none');
+    document.getElementById('fcArea').classList.add('d-none');
+    document.getElementById('fcComplete').classList.add('d-none');
+    document.getElementById('fcLoading').classList.remove('d-none');
+
+    const prompt = `Generate ${count} flashcards about ${topic || 'key concepts'} for this subject. Return JSON: {"cards":[{"front":"question","back":"answer"}]}`;
+
+    try {
+        const res = await fetch("{{ url_for('student.chat_send') }}", {
+            method:'POST',
+            headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},
+            body: JSON.stringify({session_id:null, message:prompt, subject_id:subjectId, flashcard_mode:true})
+        });
+        const data = await res.json();
+        const text = data.response || '';
+        const match = text.match(/\{[\s\S]*"cards"[\s\S]*\}/);
+        if(match){
+            cards = JSON.parse(match[0]).cards || [];
+        } else {
+            cards = [{front:"Could not generate flashcards. Try again.", back:"Please retry."}];
+        }
+    } catch(e){
+        cards = [{front:"Error: "+e.message, back:"Please retry."}];
+    }
+
+    cardIdx=0; known=0; unknown=0; flipped=false;
+    document.getElementById('fcLoading').classList.add('d-none');
+    document.getElementById('fcArea').classList.remove('d-none');
+    document.getElementById('fcStats').classList.remove('d-none');
+    showCard();
+    updateStats();
+});
+
+function showCard(){
+    if(cardIdx >= cards.length){ showComplete(); return; }
+    flipped = false;
+    document.getElementById('fcInner').style.transform = '';
+    document.getElementById('fcFront').textContent = cards[cardIdx].front;
+    document.getElementById('fcBack').textContent = cards[cardIdx].back;
+}
+
+function flipCard(){
+    flipped = !flipped;
+    document.getElementById('fcInner').style.transform = flipped ? 'rotateY(180deg)' : '';
+}
+
+function markCard(isKnown){
+    if(isKnown) known++; else unknown++;
+    cardIdx++;
+    showCard();
+    updateStats();
+}
+
+function updateStats(){
+    const total = cards.length;
+    const remaining = total - cardIdx;
+    document.getElementById('fcKnown').textContent = known;
+    document.getElementById('fcUnknown').textContent = unknown;
+    document.getElementById('fcRemaining').textContent = remaining;
+    document.getElementById('fcProgressText').textContent = `${cardIdx}/${total}`;
+    document.getElementById('fcProgressBar').style.width = total ? `${(cardIdx/total)*100}%` : '0%';
+}
+
+function showComplete(){
+    document.getElementById('fcArea').classList.add('d-none');
+    document.getElementById('fcComplete').classList.remove('d-none');
+    document.getElementById('fcFinalMsg').textContent = `You knew ${known} out of ${cards.length} cards. ${unknown > 0 ? 'Review the ones you missed!' : 'Perfect score!'}`;
+}
+
+function resetFlashcards(){
+    document.getElementById('fcComplete').classList.add('d-none');
+    document.getElementById('fcPlaceholder').classList.remove('d-none');
+    document.getElementById('fcStats').classList.add('d-none');
+}
+</script>
+{% endblock %}

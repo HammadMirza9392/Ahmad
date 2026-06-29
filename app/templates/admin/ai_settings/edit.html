@@ -1,0 +1,295 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Configure {{ provider.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-robot me-2"></i>Configure {{ provider.name }}</h1>
+    <a href="{{ url_for('admin.ai_settings') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+{% set api_urls = {
+    'gemini': 'https://aistudio.google.com/app/apikey',
+    'groq': 'https://console.groq.com/keys',
+    'openrouter': 'https://openrouter.ai/keys',
+    'huggingface': 'https://huggingface.co/settings/tokens',
+    'deepseek': 'https://platform.deepseek.com/api_keys'
+} %}
+
+{% set default_models = {
+    'gemini': 'gemini-2.0-flash',
+    'groq': 'llama-3.3-70b-versatile',
+    'openrouter': 'meta-llama/llama-3.3-70b-instruct',
+    'huggingface': 'mistralai/Mistral-7B-Instruct-v0.3',
+    'deepseek': 'deepseek-chat'
+} %}
+
+{% set default_base_urls = {
+    'gemini': '',
+    'groq': 'https://api.groq.com/openai/v1',
+    'openrouter': 'https://openrouter.ai/api/v1',
+    'huggingface': 'https://api-inference.huggingface.co/models/',
+    'deepseek': 'https://api.deepseek.com/v1'
+} %}
+
+{% set provider_notes = {
+    'gemini': 'Uses Google SDK directly',
+    'groq': 'Ultra-fast LPU inference',
+    'openrouter': 'Unified API for 200+ models',
+    'huggingface': 'Open-source model hosting',
+    'deepseek': 'Affordable reasoning & code'
+} %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <form method="POST" action="{{ url_for('admin.ai_settings_edit', provider_id=provider.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- Provider Configuration (Readonly) -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-cpu me-2"></i>Provider Configuration</h6>
+                    <div class="alert alert-light border mb-3 py-2">
+                        <i class="bi bi-lock-fill text-muted me-1"></i>
+                        <span class="small text-muted">Model and endpoint are auto-configured for {{ provider.name }}. Just paste your API key below.</span>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Model</label>
+                            <div class="form-control bg-light" style="cursor:default;">
+                                <i class="bi bi-lock text-muted me-1" style="font-size:0.75rem;"></i>
+                                <code>{{ default_models.get(provider.provider_type, 'N/A') }}</code>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Base URL</label>
+                            <div class="form-control bg-light" style="cursor:default;">
+                                <i class="bi bi-lock text-muted me-1" style="font-size:0.75rem;"></i>
+                                {% if default_base_urls.get(provider.provider_type) %}
+                                    <code class="small">{{ default_base_urls.get(provider.provider_type) }}</code>
+                                {% else %}
+                                    <span class="text-muted fst-italic small">{{ provider_notes.get(provider.provider_type, 'Auto-detected') }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Key Section -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-key me-2"></i>API Key</h6>
+
+                    <div class="alert alert-info d-flex align-items-center py-2 mb-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <div class="small">
+                            Don't have an API key?
+                            <a href="{{ api_urls.get(provider.provider_type, '#') }}" target="_blank" class="fw-bold">
+                                Get your {{ provider.name }} API key here <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label">API Key</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
+                            <input type="password" class="form-control" id="api_key" name="api_key" placeholder="Paste your API key here" autocomplete="off">
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggleKeyVisibility()"><i class="bi bi-eye" id="keyToggleIcon"></i></button>
+                        </div>
+                        {% if masked_key %}
+                        <div class="form-text">Current key: <code>{{ masked_key }}</code> — leave blank to keep existing key.</div>
+                        {% endif %}
+                        <div class="form-text text-success"><i class="bi bi-check-circle me-1"></i>Pasting a new API key will automatically activate this provider.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parameters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-sliders me-2"></i>Model Parameters</h6>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Temperature</label>
+                            <input type="range" class="form-range" id="tempRange" min="0" max="2" step="0.1" value="{{ provider.temperature or 0.7 }}" oninput="document.getElementById('temperature').value=this.value">
+                            <input type="number" class="form-control form-control-sm mt-1" id="temperature" name="temperature" value="{{ provider.temperature or 0.7 }}" min="0" max="2" step="0.1">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Top P</label>
+                            <input type="range" class="form-range" id="topPRange" min="0" max="1" step="0.1" value="{{ provider.top_p or 0.9 }}" oninput="document.getElementById('top_p').value=this.value">
+                            <input type="number" class="form-control form-control-sm mt-1" id="top_p" name="top_p" value="{{ provider.top_p or 0.9 }}" min="0" max="1" step="0.1">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Max Tokens</label>
+                            <input type="number" class="form-control" name="max_tokens" value="{{ provider.max_tokens or 2048 }}" min="100" step="100">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Timeout (sec)</label>
+                            <input type="number" class="form-control" name="timeout" value="{{ provider.timeout or 30 }}" min="5" step="5">
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="form-label">Default System Prompt</label>
+                        <textarea class="form-control" name="default_prompt" rows="3" placeholder="Optional custom system instructions...">{{ provider.default_prompt or '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Toggles -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-toggles me-2"></i>Status & Role</h6>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" {% if provider.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active"><i class="bi bi-power me-1"></i>Active</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_primary" name="is_primary" value="1" {% if provider.is_primary %}checked{% endif %}>
+                                <label class="form-check-label" for="is_primary"><i class="bi bi-star-fill me-1"></i>Primary</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_backup" name="is_backup" value="1" {% if provider.is_backup %}checked{% endif %}>
+                                <label class="form-check-label" for="is_backup"><i class="bi bi-shield-check me-1"></i>Backup</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="streaming" name="streaming" value="1" {% if provider.streaming %}checked{% endif %}>
+                                <label class="form-check-label" for="streaming"><i class="bi bi-broadcast me-1"></i>Streaming</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+                <button type="submit" name="action" value="save" class="btn btn-primary px-4">
+                    <i class="bi bi-check-lg me-1"></i>Save Changes
+                </button>
+                <button type="submit" name="action" value="save_and_test" class="btn btn-success px-4">
+                    <i class="bi bi-lightning me-1"></i>Save & Test Connection
+                </button>
+                <a href="{{ url_for('admin.ai_settings') }}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+
+            {% if not masked_key %}
+            <div class="alert alert-warning mt-3 py-2">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>No API key saved yet.</strong> Paste your API key above, then click <strong>"Save & Test Connection"</strong> to verify it works.
+            </div>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Sidebar Info -->
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-body text-center">
+                <div class="avatar mx-auto mb-2" style="width:60px;height:60px;font-size:1.5rem;
+                    {% if provider.provider_type == 'gemini' %}background:linear-gradient(135deg,#4285f4,#34a853);
+                    {% elif provider.provider_type == 'groq' %}background:linear-gradient(135deg,#f55036,#ff7043);
+                    {% elif provider.provider_type == 'openrouter' %}background:linear-gradient(135deg,#6366f1,#8b5cf6);
+                    {% elif provider.provider_type == 'huggingface' %}background:linear-gradient(135deg,#ff9d00,#ffcd00);color:#333;
+                    {% elif provider.provider_type == 'deepseek' %}background:linear-gradient(135deg,#0066ff,#00ccff);
+                    {% else %}background:linear-gradient(135deg,#667eea,#764ba2);{% endif %}">
+                    <i class="bi bi-robot"></i>
+                </div>
+                <h5 class="fw-bold">{{ provider.name }}</h5>
+                <span class="badge bg-dark">{{ provider.provider_type }}</span>
+                <hr>
+                <a href="{{ api_urls.get(provider.provider_type, '#') }}" target="_blank" class="btn btn-outline-primary btn-sm w-100 mb-2">
+                    <i class="bi bi-key me-1"></i>Get API Key
+                </a>
+                <button type="button" class="btn btn-outline-info btn-sm w-100" onclick="testCurrentProvider()">
+                    <i class="bi bi-lightning me-1"></i>Test Connection
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h6 class="fw-bold mb-2"><i class="bi bi-info-circle me-1"></i>Provider Info</h6>
+                <ul class="list-unstyled small text-muted mb-0">
+                    {% if provider.provider_type == 'gemini' %}
+                    <li class="mb-1">Free tier: 15 RPM, 1M tokens/min</li>
+                    <li class="mb-1">Model: gemini-2.0-flash</li>
+                    <li>Supports: Text, Code, Vision</li>
+                    {% elif provider.provider_type == 'groq' %}
+                    <li class="mb-1">Free tier: 30 RPM, 14,400 RPD</li>
+                    <li class="mb-1">Model: llama-3.3-70b-versatile</li>
+                    <li>Ultra-fast inference</li>
+                    {% elif provider.provider_type == 'openrouter' %}
+                    <li class="mb-1">Pay-per-use, 200+ models</li>
+                    <li class="mb-1">Model: llama-3.3-70b-instruct</li>
+                    <li>Unified API for all providers</li>
+                    {% elif provider.provider_type == 'huggingface' %}
+                    <li class="mb-1">Free tier: Rate limited</li>
+                    <li class="mb-1">Model: Mistral-7B-Instruct-v0.3</li>
+                    <li>Open-source models</li>
+                    {% elif provider.provider_type == 'deepseek' %}
+                    <li class="mb-1">Very affordable pricing</li>
+                    <li class="mb-1">Model: deepseek-chat</li>
+                    <li>Great for code and reasoning</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Result Modal -->
+<div class="modal fade" id="testModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title">Test Result</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body" id="testResult"><div class="text-center py-3"><div class="spinner-border text-primary"></div></div></div>
+    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div>
+</div></div></div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+// Sync range sliders with number inputs
+document.getElementById('temperature').addEventListener('input', function() {
+    document.getElementById('tempRange').value = this.value;
+});
+document.getElementById('top_p').addEventListener('input', function() {
+    document.getElementById('topPRange').value = this.value;
+});
+
+// Toggle API key visibility
+function toggleKeyVisibility() {
+    const inp = document.getElementById('api_key');
+    const icon = document.getElementById('keyToggleIcon');
+    if (inp.type === 'password') {
+        inp.type = 'text'; icon.className = 'bi bi-eye-slash';
+    } else {
+        inp.type = 'password'; icon.className = 'bi bi-eye';
+    }
+}
+
+// Test connection
+function testCurrentProvider() {
+    const modal = new bootstrap.Modal(document.getElementById('testModal'));
+    document.getElementById('testResult').innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Testing...</p></div>';
+    modal.show();
+    fetch('/admin/ai-settings/test/{{ provider.id }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}'}
+    }).then(r => r.json()).then(data => {
+        document.getElementById('testResult').innerHTML = data.success
+            ? '<div class="alert alert-success mb-0"><i class="bi bi-check-circle-fill me-2"></i><strong>Success!</strong><br><small>' + data.message + '</small></div>'
+            : '<div class="alert alert-danger mb-0"><i class="bi bi-x-circle-fill me-2"></i><strong>Failed</strong><br><small>' + data.message + '</small></div>';
+    }).catch(e => {
+        document.getElementById('testResult').innerHTML = '<div class="alert alert-danger mb-0">Error: ' + e.message + '</div>';
+    });
+}
+</script>
+{% endblock %}

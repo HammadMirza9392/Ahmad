@@ -1,0 +1,80 @@
+{% extends "layouts/admin.html" %}
+
+{% block title %}FAQs{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-question-circle me-2"></i>Frequently Asked Questions</h1>
+    <a href="{{ url_for('admin.faq_create') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>Create FAQ
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="card-title mb-0">All FAQs</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Question</th>
+                        <th scope="col">Answer</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">Active</th>
+                        <th scope="col">Sort Order</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for faq in faqs %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>
+                            <span class="fw-semibold" title="{{ faq.question }}">
+                                {{ faq.question[:80] }}{% if faq.question|length > 80 %}...{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="text-muted small" title="{{ faq.answer }}">
+                                {{ faq.answer[:100] }}{% if faq.answer|length > 100 %}...{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            {% if faq.category %}
+                            <span class="badge bg-info text-dark">{{ faq.category }}</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if faq.is_active %}
+                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Active</span>
+                            {% else %}
+                            <span class="badge bg-secondary"><i class="bi bi-x-circle me-1"></i>Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark">{{ faq.sort_order or 0 }}</span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                            No FAQs found. Click "Create FAQ" to add one.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if faqs %}
+    <div class="card-footer bg-white text-muted">
+        Total: {{ faqs|length }} FAQ{{ 's' if faqs|length != 1 else '' }}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

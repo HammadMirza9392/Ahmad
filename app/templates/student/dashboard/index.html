@@ -1,0 +1,175 @@
+{% extends "layouts/student.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="card border-0 mb-4" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;">
+    <div class="card-body p-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h3 class="fw-bold mb-1">Welcome back, {{ current_user.full_name }}!</h3>
+                <p class="mb-0 opacity-75">Ready to continue learning? Your AI assistant is here to help.</p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="{{ url_for('student.chat') }}" class="btn btn-light btn-lg fw-semibold">
+                    <i class="bi bi-chat-dots-fill me-2"></i>Start Chat
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-3 d-flex align-items-center justify-content-center"
+                     style="width:48px;height:48px;background:rgba(102,126,234,.1);color:#667eea;font-size:1.4rem;">
+                    <i class="bi bi-chat-dots-fill"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Recent Chats</div>
+                    <div class="fw-bold fs-4">{{ recent_chats|length if recent_chats else 0 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-3 d-flex align-items-center justify-content-center"
+                     style="width:48px;height:48px;background:rgba(40,167,69,.1);color:#28a745;font-size:1.4rem;">
+                    <i class="bi bi-chat-square-text-fill"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Total Chats</div>
+                    <div class="fw-bold fs-4">{{ total_chats if total_chats is defined else 0 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-3 d-flex align-items-center justify-content-center"
+                     style="width:48px;height:48px;background:rgba(255,193,7,.1);color:#ffc107;font-size:1.4rem;">
+                    <i class="bi bi-bell-fill"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Unread Alerts</div>
+                    <div class="fw-bold fs-4">{{ unread_notifications if unread_notifications is defined else 0 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="rounded-3 d-flex align-items-center justify-content-center"
+                     style="width:48px;height:48px;background:rgba(220,53,69,.1);color:#dc3545;font-size:1.4rem;">
+                    <i class="bi bi-book-half"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Subjects</div>
+                    <div class="fw-bold fs-4">{{ subjects|length if subjects else 0 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Recent Chats -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between pt-3">
+                <h6 class="fw-bold mb-0"><i class="bi bi-clock-history me-2"></i>Recent Conversations</h6>
+                <a href="{{ url_for('student.chat') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_chats %}
+                <div class="list-group list-group-flush">
+                    {% for chat in recent_chats[:5] %}
+                    <a href="{{ url_for('student.chat', session_id=chat.id) }}" class="list-group-item list-group-item-action border-0 px-4 py-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                 style="width:40px;height:40px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;flex-shrink:0;">
+                                <i class="bi bi-chat-dots"></i>
+                            </div>
+                            <div class="flex-grow-1 min-w-0">
+                                <div class="fw-semibold text-truncate">{{ chat.title or 'Untitled Chat' }}</div>
+                                <small class="text-muted">{{ chat.updated_at.strftime('%b %d, %Y %I:%M %p') if chat.updated_at else '' }}</small>
+                            </div>
+                            {% if chat.is_bookmarked %}
+                            <i class="bi bi-bookmark-fill text-warning"></i>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-chat-dots" style="font-size:2.5rem;opacity:.3;"></i>
+                    <p class="mt-2 mb-0">No conversations yet. Start chatting with AI!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links & Subjects -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent border-0 pt-3">
+                <h6 class="fw-bold mb-0"><i class="bi bi-lightning-fill me-2 text-warning"></i>Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <form action="{{ url_for('student.chat_new') }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-primary w-100 text-start">
+                            <i class="bi bi-plus-circle me-2"></i>New Chat
+                        </button>
+                    </form>
+                    <a href="{{ url_for('student.quiz') }}" class="btn btn-outline-secondary text-start">
+                        <i class="bi bi-patch-question me-2"></i>Take a Quiz
+                    </a>
+                    <a href="{{ url_for('student.flashcards') }}" class="btn btn-outline-secondary text-start">
+                        <i class="bi bi-card-heading me-2"></i>Study Flashcards
+                    </a>
+                    <a href="{{ url_for('student.downloads') }}" class="btn btn-outline-secondary text-start">
+                        <i class="bi bi-cloud-download me-2"></i>Downloads
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 pt-3">
+                <h6 class="fw-bold mb-0"><i class="bi bi-book-half me-2 text-danger"></i>My Subjects</h6>
+            </div>
+            <div class="card-body p-0">
+                {% if subjects %}
+                <div class="list-group list-group-flush">
+                    {% for subject in subjects[:5] %}
+                    <div class="list-group-item border-0 px-4 py-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-circle-fill" style="font-size:.5rem;color:#667eea;"></i>
+                            <span>{{ subject.name }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <small>No subjects assigned yet.</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

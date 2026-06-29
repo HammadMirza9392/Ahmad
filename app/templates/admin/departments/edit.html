@@ -1,0 +1,154 @@
+{% extends "layouts/admin.html" %}
+
+{% block title %}Edit Department - {{ dept.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-pencil-square me-2"></i>Edit Department</h1>
+    <a href="{{ url_for('admin.departments') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Departments
+    </a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<form method="POST" action="{{ url_for('admin.department_edit', dept_id=dept.id) }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="row">
+        <!-- Main Info -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Department Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Department Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ dept.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="slug" class="form-label">Slug <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text">/departments/</span>
+                            <input type="text" class="form-control" id="slug" name="slug" value="{{ dept.slug }}" required>
+                        </div>
+                        <div class="form-text">URL-friendly identifier. Changing this may break existing links.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="5">{{ dept.description or '' }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Department Image</label>
+                        {% if dept.image %}
+                        <div class="mb-2">
+                            <img src="{{ url_for('static', filename='uploads/' + dept.image) }}" alt="{{ dept.name }}" class="img-thumbnail" style="max-height: 120px;">
+                            <small class="d-block text-muted mt-1">Current department image</small>
+                        </div>
+                        {% endif %}
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                        <div class="form-text">Upload a new image to replace the current one. Recommended size: 800x600 pixels.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HOD Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="bi bi-person-badge me-2"></i>Head of Department</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="hod_name" class="form-label">HOD Name</label>
+                            <input type="text" class="form-control" id="hod_name" name="hod_name" value="{{ dept.hod_name or '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="hod_image" class="form-label">HOD Photo</label>
+                            {% if dept.hod_image %}
+                            <div class="mb-2">
+                                <img src="{{ url_for('static', filename='uploads/' + dept.hod_image) }}" alt="{{ dept.hod_name }}" class="img-thumbnail rounded-circle" style="max-height: 60px; max-width: 60px;">
+                                <small class="d-block text-muted mt-1">Current HOD photo</small>
+                            </div>
+                            {% endif %}
+                            <input type="file" class="form-control" id="hod_image" name="hod_image" accept="image/*">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="hod_email" class="form-label">HOD Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input type="email" class="form-control" id="hod_email" name="hod_email" value="{{ dept.hod_email or '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="hod_phone" class="form-label">HOD Phone</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                <input type="text" class="form-control" id="hod_phone" name="hod_phone" value="{{ dept.hod_phone or '' }}">
+                            </div>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="hod_message" class="form-label">HOD Message</label>
+                            <textarea class="form-control" id="hod_message" name="hod_message" rows="4">{{ dept.hod_message or '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="bi bi-gear me-2"></i>Settings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="sort_order" class="form-label">Sort Order</label>
+                        <input type="number" class="form-control" id="sort_order" name="sort_order" value="{{ dept.sort_order or 0 }}" min="0">
+                        <div class="form-text">Lower numbers appear first.</div>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" {% if dept.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active">Active</label>
+                        <div class="form-text">Inactive departments are hidden from the public site.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i> Update Department
+                </button>
+                <a href="{{ url_for('admin.departments') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-1"></i> Cancel
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('name').addEventListener('input', function() {
+        var slug = this.value.toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .trim();
+        document.getElementById('slug').value = slug;
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,274 @@
+{% extends "layouts/admin.html" %}
+
+{% block title %}Institution Settings{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-building me-2"></i>Institution Settings</h1>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<form method="POST" action="{{ url_for('admin.institution') }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <!-- Branding Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0"><i class="bi bi-palette me-2"></i>Branding</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="name" class="form-label">Institution Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="name" name="name" value="{{ inst.name or '' }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="institution_type" class="form-label">Institution Type <span class="text-danger">*</span></label>
+                    <select class="form-select" id="institution_type" name="institution_type" required>
+                        <option value="">-- Select Type --</option>
+                        <option value="college" {% if inst.institution_type == 'college' %}selected{% endif %}>College</option>
+                        <option value="university" {% if inst.institution_type == 'university' %}selected{% endif %}>University</option>
+                        <option value="both" {% if inst.institution_type == 'both' %}selected{% endif %}>Both</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="university_name" class="form-label">University Name</label>
+                    <input type="text" class="form-control" id="university_name" name="university_name" value="{{ inst.university_name or '' }}">
+                    <div class="form-text">If affiliated with a university, enter its name here.</div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="logo" class="form-label">Logo</label>
+                    {% if inst.logo %}
+                    <div class="mb-2">
+                        <img src="{{ url_for('static', filename='uploads/' + inst.logo) }}" alt="Current Logo" class="img-thumbnail" style="max-height: 80px;">
+                        <small class="d-block text-muted mt-1">Current logo</small>
+                    </div>
+                    {% endif %}
+                    <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="banner" class="form-label">Banner Image</label>
+                    {% if inst.banner %}
+                    <div class="mb-2">
+                        <img src="{{ url_for('static', filename='uploads/' + inst.banner) }}" alt="Current Banner" class="img-thumbnail" style="max-height: 80px;">
+                        <small class="d-block text-muted mt-1">Current banner</small>
+                    </div>
+                    {% endif %}
+                    <input type="file" class="form-control" id="banner" name="banner" accept="image/*">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="favicon" class="form-label">Favicon</label>
+                    {% if inst.favicon %}
+                    <div class="mb-2">
+                        <img src="{{ url_for('static', filename='uploads/' + inst.favicon) }}" alt="Current Favicon" class="img-thumbnail" style="max-height: 40px;">
+                        <small class="d-block text-muted mt-1">Current favicon</small>
+                    </div>
+                    {% endif %}
+                    <input type="file" class="form-control" id="favicon" name="favicon" accept="image/*">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0"><i class="bi bi-file-earmark-text me-2"></i>Content</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="about" class="form-label">About</label>
+                <textarea class="form-control" id="about" name="about" rows="4">{{ inst.about or '' }}</textarea>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="vision" class="form-label">Vision</label>
+                    <textarea class="form-control" id="vision" name="vision" rows="3">{{ inst.vision or '' }}</textarea>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="mission" class="form-label">Mission</label>
+                    <textarea class="form-control" id="mission" name="mission" rows="3">{{ inst.mission or '' }}</textarea>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="history" class="form-label">History</label>
+                <textarea class="form-control" id="history" name="history" rows="4">{{ inst.history or '' }}</textarea>
+            </div>
+
+            <hr class="my-4">
+            <h6 class="text-muted mb-3"><i class="bi bi-person-badge me-1"></i> Principal / Dean Information</h6>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="principal_name" class="form-label">Principal / Dean Name</label>
+                    <input type="text" class="form-control" id="principal_name" name="principal_name" value="{{ inst.principal_name or '' }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="principal_image" class="form-label">Principal / Dean Image</label>
+                    {% if inst.principal_image %}
+                    <div class="mb-2">
+                        <img src="{{ url_for('static', filename='uploads/' + inst.principal_image) }}" alt="Principal" class="img-thumbnail rounded-circle" style="max-height: 60px; max-width: 60px;">
+                    </div>
+                    {% endif %}
+                    <input type="file" class="form-control" id="principal_image" name="principal_image" accept="image/*">
+                </div>
+                <div class="col-12 mb-3">
+                    <label for="principal_message" class="form-label">Principal / Dean Message</label>
+                    <textarea class="form-control" id="principal_message" name="principal_message" rows="4">{{ inst.principal_message or '' }}</textarea>
+                </div>
+            </div>
+
+            <hr class="my-4">
+            <h6 class="text-muted mb-3"><i class="bi bi-mortarboard me-1"></i> Vice Chancellor Information</h6>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="vc_name" class="form-label">Vice Chancellor Name</label>
+                    <input type="text" class="form-control" id="vc_name" name="vc_name" value="{{ inst.vc_name or '' }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="vc_image" class="form-label">Vice Chancellor Image</label>
+                    {% if inst.vc_image %}
+                    <div class="mb-2">
+                        <img src="{{ url_for('static', filename='uploads/' + inst.vc_image) }}" alt="Vice Chancellor" class="img-thumbnail rounded-circle" style="max-height: 60px; max-width: 60px;">
+                    </div>
+                    {% endif %}
+                    <input type="file" class="form-control" id="vc_image" name="vc_image" accept="image/*">
+                </div>
+                <div class="col-12 mb-3">
+                    <label for="vc_message" class="form-label">Vice Chancellor Message</label>
+                    <textarea class="form-control" id="vc_message" name="vc_message" rows="4">{{ inst.vc_message or '' }}</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0"><i class="bi bi-geo-alt me-2"></i>Contact Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label for="address" class="form-label">Address</label>
+                    <textarea class="form-control" id="address" name="address" rows="2">{{ inst.address or '' }}</textarea>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="phone" class="form-label">Phone</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                        <input type="text" class="form-control" id="phone" name="phone" value="{{ inst.phone or '' }}">
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ inst.email or '' }}">
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="website" class="form-label">Website</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-globe"></i></span>
+                        <input type="url" class="form-control" id="website" name="website" value="{{ inst.website or '' }}">
+                    </div>
+                </div>
+                <div class="col-md-8 mb-3">
+                    <label for="google_map" class="form-label">Google Map Embed Code</label>
+                    <textarea class="form-control" id="google_map" name="google_map" rows="3" placeholder="Paste Google Maps embed iframe code here">{{ inst.google_map or '' }}</textarea>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="office_timing" class="form-label">Office Timing</label>
+                    <input type="text" class="form-control" id="office_timing" name="office_timing" value="{{ inst.office_timing or '' }}" placeholder="e.g., Mon-Fri 9:00 AM - 5:00 PM">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Social Media Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0"><i class="bi bi-share me-2"></i>Social Media</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="facebook" class="form-label"><i class="bi bi-facebook me-1"></i> Facebook</label>
+                    <input type="url" class="form-control" id="facebook" name="facebook" value="{{ inst.facebook or '' }}" placeholder="https://facebook.com/...">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="twitter" class="form-label"><i class="bi bi-twitter-x me-1"></i> Twitter / X</label>
+                    <input type="url" class="form-control" id="twitter" name="twitter" value="{{ inst.twitter or '' }}" placeholder="https://x.com/...">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="instagram" class="form-label"><i class="bi bi-instagram me-1"></i> Instagram</label>
+                    <input type="url" class="form-control" id="instagram" name="instagram" value="{{ inst.instagram or '' }}" placeholder="https://instagram.com/...">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="youtube" class="form-label"><i class="bi bi-youtube me-1"></i> YouTube</label>
+                    <input type="url" class="form-control" id="youtube" name="youtube" value="{{ inst.youtube or '' }}" placeholder="https://youtube.com/...">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="linkedin" class="form-label"><i class="bi bi-linkedin me-1"></i> LinkedIn</label>
+                    <input type="url" class="form-control" id="linkedin" name="linkedin" value="{{ inst.linkedin or '' }}" placeholder="https://linkedin.com/...">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0"><i class="bi bi-brush me-2"></i>Theme Settings</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="primary_color" class="form-label">Primary Color</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="color" class="form-control form-control-color" id="primary_color" name="primary_color" value="{{ inst.primary_color or '#0d6efd' }}">
+                        <input type="text" class="form-control" id="primary_color_text" value="{{ inst.primary_color or '#0d6efd' }}" readonly style="max-width: 120px;">
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="secondary_color" class="form-label">Secondary Color</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="color" class="form-control form-control-color" id="secondary_color" name="secondary_color" value="{{ inst.secondary_color or '#6c757d' }}">
+                        <input type="text" class="form-control" id="secondary_color_text" value="{{ inst.secondary_color or '#6c757d' }}" readonly style="max-width: 120px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="d-flex justify-content-end mb-4">
+        <button type="submit" class="btn btn-primary btn-lg">
+            <i class="bi bi-check-circle me-1"></i> Save Institution Settings
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('primary_color').addEventListener('input', function() {
+        document.getElementById('primary_color_text').value = this.value;
+    });
+    document.getElementById('secondary_color').addEventListener('input', function() {
+        document.getElementById('secondary_color_text').value = this.value;
+    });
+</script>
+{% endblock %}

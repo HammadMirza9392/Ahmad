@@ -1,0 +1,349 @@
+{% extends "layouts/cms.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section position-relative overflow-hidden">
+    {% if institution and institution.banner %}
+    <div class="position-absolute top-0 start-0 w-100 h-100" style="background:url('{{ institution.banner }}') center/cover no-repeat;opacity:0.15;"></div>
+    {% endif %}
+    <div class="container position-relative">
+        <div class="row align-items-center justify-content-center" style="min-height:340px;">
+            <div class="col-lg-8">
+                {% if institution and institution.logo %}
+                <img src="{{ institution.logo }}" alt="Logo" class="mb-3 rounded-3" style="height:80px;">
+                {% endif %}
+                <h1 class="display-5 fw-bold mb-3">{{ institution.name if institution else 'Welcome to Our Institution' }}</h1>
+                <p class="lead mb-4">
+                    {% if page and page.content %}
+                        {{ page.content | truncate(200, True) }}
+                    {% elif institution and institution.about %}
+                        {{ institution.about | truncate(200, True) }}
+                    {% else %}
+                        Empowering students with quality education, modern facilities, and a vision for excellence.
+                    {% endif %}
+                </p>
+                <div class="d-flex flex-wrap gap-3 justify-content-center">
+                    <a href="{{ url_for('cms.page', slug='about') }}" class="btn btn-light btn-lg px-4">
+                        <i class="bi bi-info-circle me-2"></i>Learn More
+                    </a>
+                    <a href="{{ url_for('cms.page', slug='admission') }}" class="btn btn-outline-light btn-lg px-4">
+                        <i class="bi bi-pencil-square me-2"></i>Admissions
+                    </a>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg px-4">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Student Portal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Decorative wave -->
+    <div class="position-absolute bottom-0 start-0 w-100">
+        <svg viewBox="0 0 1440 100" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style="display:block;width:100%;height:60px;">
+            <path d="M0,60 C360,100 1080,0 1440,60 L1440,100 L0,100 Z" fill="#f0f2f5"/>
+        </svg>
+    </div>
+</section>
+
+<!-- Quick Stats -->
+{% if institution %}
+<section class="py-4" style="margin-top:-1rem;">
+    <div class="container">
+        <div class="row g-3">
+            <div class="col-6 col-md-3">
+                <div class="card text-center py-3 border-0 shadow-sm">
+                    <div class="card-body p-2">
+                        <div class="gradient-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width:48px;height:48px;">
+                            <i class="bi bi-building fs-5 text-white"></i>
+                        </div>
+                        <h4 class="fw-bold mb-0">{{ departments|length if departments else '0' }}+</h4>
+                        <small class="text-muted">Departments</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card text-center py-3 border-0 shadow-sm">
+                    <div class="card-body p-2">
+                        <div class="gradient-success rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width:48px;height:48px;">
+                            <i class="bi bi-journal-bookmark fs-5 text-white"></i>
+                        </div>
+                        <h4 class="fw-bold mb-0">
+                            {% set prog_count = namespace(n=0) %}
+                            {% for d in departments %}{% set prog_count.n = prog_count.n + d.programs|length %}{% endfor %}
+                            {{ prog_count.n }}+
+                        </h4>
+                        <small class="text-muted">Programs</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card text-center py-3 border-0 shadow-sm">
+                    <div class="card-body p-2">
+                        <div class="gradient-warning rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width:48px;height:48px;">
+                            <i class="bi bi-newspaper fs-5 text-white"></i>
+                        </div>
+                        <h4 class="fw-bold mb-0">{{ news|length if news else '0' }}+</h4>
+                        <small class="text-muted">Latest News</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card text-center py-3 border-0 shadow-sm">
+                    <div class="card-body p-2">
+                        <div class="gradient-info rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width:48px;height:48px;">
+                            <i class="bi bi-calendar-event fs-5 text-white"></i>
+                        </div>
+                        <h4 class="fw-bold mb-0">{{ events|length if events else '0' }}+</h4>
+                        <small class="text-muted">Upcoming Events</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Departments Section -->
+{% if departments %}
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">Our Departments</h2>
+        <p class="section-subtitle">Explore our diverse range of academic departments</p>
+        <div class="row g-4">
+            {% for dept in departments[:8] %}
+            <div class="col-md-6 col-lg-3">
+                <a href="{{ url_for('cms.department_detail', slug=dept.slug) }}" class="text-decoration-none">
+                    <div class="card dept-card h-100">
+                        {% if dept.image %}
+                        <img src="{{ dept.image }}" alt="{{ dept.name }}" loading="lazy">
+                        {% else %}
+                        <div class="d-flex align-items-center justify-content-center" style="height:200px;background:linear-gradient(135deg,var(--primary),var(--secondary));">
+                            <i class="bi bi-mortarboard fs-1 text-white"></i>
+                        </div>
+                        {% endif %}
+                        <div class="dept-body">
+                            <h5 class="text-dark mb-1">{{ dept.name }}</h5>
+                            {% if dept.programs %}
+                            <small class="text-muted">{{ dept.programs|length }} Program{{ 's' if dept.programs|length != 1 }}</small>
+                            {% endif %}
+                            {% if dept.hod_name %}
+                            <p class="text-muted small mb-0 mt-2">
+                                <i class="bi bi-person me-1"></i>HOD: {{ dept.hod_name }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% if departments|length > 8 %}
+        <div class="text-center mt-4">
+            <a href="{{ url_for('cms.page', slug='departments') }}" class="btn btn-outline-primary px-4">
+                View All Departments <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Latest News Section -->
+{% if news %}
+<section class="section" style="background:var(--bg-body);">
+    <div class="container">
+        <h2 class="section-title">Latest News</h2>
+        <p class="section-subtitle">Stay updated with the latest happenings at our institution</p>
+        <div class="row g-4">
+            {% for article in news[:6] %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    {% if article.image %}
+                    <img src="{{ article.image }}" class="card-img-top" alt="{{ article.title }}" style="height:200px;object-fit:cover;" loading="lazy">
+                    {% else %}
+                    <div class="d-flex align-items-center justify-content-center card-img-top" style="height:200px;background:linear-gradient(135deg,#667eea,#764ba2);">
+                        <i class="bi bi-newspaper fs-1 text-white"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            {% if article.category %}
+                            <span class="badge bg-primary bg-opacity-10 text-primary">{{ article.category }}</span>
+                            {% endif %}
+                            <small class="text-muted">
+                                <i class="bi bi-calendar3 me-1"></i>{{ article.published_at.strftime('%b %d, %Y') if article.published_at else '' }}
+                            </small>
+                        </div>
+                        <h5 class="card-title fw-bold" style="font-size:1rem;">{{ article.title }}</h5>
+                        <p class="card-text text-muted small flex-grow-1">
+                            {{ article.excerpt | truncate(120, True) if article.excerpt else (article.content | truncate(120, True) if article.content else '') }}
+                        </p>
+                        {% if article.department %}
+                        <small class="text-muted">
+                            <i class="bi bi-building me-1"></i>{{ article.department.name }}
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{{ url_for('cms.page', slug='news') }}" class="btn btn-outline-primary px-4">
+                All News <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Upcoming Events Section -->
+{% if events %}
+<section class="section">
+    <div class="container">
+        <h2 class="section-title">Upcoming Events</h2>
+        <p class="section-subtitle">Don't miss out on important dates and events</p>
+        <div class="row g-4">
+            {% for event in events[:4] %}
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body d-flex gap-3 align-items-start">
+                        <!-- Date Badge -->
+                        <div class="text-center flex-shrink-0" style="min-width:65px;">
+                            {% if event.event_date %}
+                            <div class="rounded-3 p-2" style="background:linear-gradient(135deg,var(--primary),var(--secondary));">
+                                <div class="text-white fw-bold" style="font-size:1.5rem;line-height:1;">{{ event.event_date.strftime('%d') }}</div>
+                                <div class="text-white-50 small">{{ event.event_date.strftime('%b') }}</div>
+                                <div class="text-white-50 small">{{ event.event_date.strftime('%Y') }}</div>
+                            </div>
+                            {% else %}
+                            <div class="rounded-3 p-2 bg-secondary bg-opacity-10">
+                                <i class="bi bi-calendar-event fs-4 text-secondary"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <!-- Event Info -->
+                        <div class="flex-grow-1">
+                            <h5 class="fw-bold mb-1" style="font-size:1rem;">{{ event.title }}</h5>
+                            {% if event.venue %}
+                            <p class="text-muted small mb-1">
+                                <i class="bi bi-geo-alt me-1"></i>{{ event.venue }}
+                            </p>
+                            {% endif %}
+                            {% if event.event_date %}
+                            <p class="text-muted small mb-1">
+                                <i class="bi bi-clock me-1"></i>{{ event.event_date.strftime('%I:%M %p') }}
+                                {% if event.end_date %} - {{ event.end_date.strftime('%I:%M %p') }}{% endif %}
+                            </p>
+                            {% endif %}
+                            {% if event.description %}
+                            <p class="text-muted small mb-0">{{ event.description | truncate(100, True) }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{{ url_for('cms.page', slug='events') }}" class="btn btn-outline-primary px-4">
+                All Events <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Principal / VC Messages -->
+{% if institution and (institution.principal_message or institution.vc_message) %}
+<section class="section" style="background:linear-gradient(135deg,#1a56db08,#7c3aed08);">
+    <div class="container">
+        <h2 class="section-title">Messages from Leadership</h2>
+        <p class="section-subtitle">Inspiring words from our academic leaders</p>
+        <div class="row g-4 justify-content-center">
+            {% if institution.principal_message %}
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        {% if institution.principal_image %}
+                        <img src="{{ institution.principal_image }}" alt="{{ institution.principal_name }}" class="rounded-circle mb-3" style="width:100px;height:100px;object-fit:cover;border:3px solid var(--primary);">
+                        {% else %}
+                        <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center gradient-primary" style="width:100px;height:100px;">
+                            <i class="bi bi-person fs-1 text-white"></i>
+                        </div>
+                        {% endif %}
+                        <h5 class="fw-bold">{{ institution.principal_name or 'Principal' }}</h5>
+                        <span class="badge bg-primary bg-opacity-10 text-primary mb-3">Principal</span>
+                        <p class="text-muted" style="font-style:italic;">
+                            "{{ institution.principal_message | truncate(300, True) }}"
+                        </p>
+                        <a href="{{ url_for('cms.page', slug='about') }}" class="text-primary small">Read Full Message <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% if institution.vc_message %}
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        {% if institution.vc_image %}
+                        <img src="{{ institution.vc_image }}" alt="{{ institution.vc_name }}" class="rounded-circle mb-3" style="width:100px;height:100px;object-fit:cover;border:3px solid var(--secondary);">
+                        {% else %}
+                        <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center gradient-secondary" style="width:100px;height:100px;">
+                            <i class="bi bi-person fs-1 text-white"></i>
+                        </div>
+                        {% endif %}
+                        <h5 class="fw-bold">{{ institution.vc_name or 'Vice Chancellor' }}</h5>
+                        <span class="badge bg-secondary bg-opacity-10 text-secondary mb-3">Vice Chancellor</span>
+                        <p class="text-muted" style="font-style:italic;">
+                            "{{ institution.vc_message | truncate(300, True) }}"
+                        </p>
+                        <a href="{{ url_for('cms.page', slug='about') }}" class="text-primary small">Read Full Message <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Quick Links / CTA -->
+<section class="section">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm text-center p-4 h-100">
+                    <div class="gradient-primary rounded-circle d-inline-flex align-items-center justify-content-center mx-auto mb-3" style="width:64px;height:64px;">
+                        <i class="bi bi-download fs-4 text-white"></i>
+                    </div>
+                    <h5 class="fw-bold">Downloads</h5>
+                    <p class="text-muted small">Access past papers, notes, books, timetables, and other resources.</p>
+                    <a href="{{ url_for('cms.page', slug='downloads') }}" class="btn btn-outline-primary btn-sm mt-auto">Browse Downloads</a>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm text-center p-4 h-100">
+                    <div class="gradient-success rounded-circle d-inline-flex align-items-center justify-content-center mx-auto mb-3" style="width:64px;height:64px;">
+                        <i class="bi bi-images fs-4 text-white"></i>
+                    </div>
+                    <h5 class="fw-bold">Gallery</h5>
+                    <p class="text-muted small">View photos from events, campus life, and achievements.</p>
+                    <a href="{{ url_for('cms.page', slug='gallery') }}" class="btn btn-outline-primary btn-sm mt-auto">View Gallery</a>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm text-center p-4 h-100">
+                    <div class="gradient-info rounded-circle d-inline-flex align-items-center justify-content-center mx-auto mb-3" style="width:64px;height:64px;">
+                        <i class="bi bi-question-circle fs-4 text-white"></i>
+                    </div>
+                    <h5 class="fw-bold">FAQ</h5>
+                    <p class="text-muted small">Find answers to commonly asked questions about admissions and academics.</p>
+                    <a href="{{ url_for('cms.page', slug='faq') }}" class="btn btn-outline-primary btn-sm mt-auto">View FAQ</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

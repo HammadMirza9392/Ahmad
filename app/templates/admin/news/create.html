@@ -1,0 +1,96 @@
+{% extends "layouts/admin.html" %}
+
+{% block title %}Create News{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-newspaper me-2"></i>Create News Article</h1>
+    <a href="{{ url_for('admin.news') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back to News
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="card-title mb-0">New Article</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('admin.news_create') }}" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" name="title" required placeholder="Enter news article title">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="slug" class="form-label">Slug</label>
+                        <input type="text" class="form-control" id="slug" name="slug" placeholder="auto-generated-from-title">
+                        <div class="form-text">Leave blank to auto-generate from title.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="excerpt" class="form-label">Excerpt</label>
+                        <textarea class="form-control" id="excerpt" name="excerpt" rows="3" placeholder="A short summary displayed in listings..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="content" class="form-label">Content</label>
+                        <textarea class="form-control" id="content" name="content" rows="8" placeholder="Full article content..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Featured Image</label>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                        <div class="form-text">Upload a featured image for the news article.</div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category</label>
+                        <input type="text" class="form-control" id="category" name="category" placeholder="e.g., Announcements, Academics">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="department_id" class="form-label">Department</label>
+                        <select class="form-select" id="department_id" name="department_id">
+                            <option value="">-- Select Department --</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.id }}">{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="is_published" name="is_published" value="1" checked>
+                            <label class="form-check-label" for="is_published">Published</label>
+                        </div>
+                        <div class="form-text">Unpublished articles are saved as drafts.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="is_featured" name="is_featured" value="1">
+                            <label class="form-check-label" for="is_featured">Featured</label>
+                        </div>
+                        <div class="form-text">Featured articles are highlighted on the homepage.</div>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i>Publish Article
+                </button>
+                <a href="{{ url_for('admin.news') }}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

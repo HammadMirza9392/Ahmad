@@ -1,0 +1,121 @@
+{% extends "layouts/admin.html" %}
+
+{% block title %}Edit Student - {{ student.full_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-pencil-square me-2"></i>Edit Student</h1>
+    <a href="{{ url_for('admin.students') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back to Students
+    </a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">Edit: {{ student.full_name }}</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('admin.student_edit', student_id=student.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <!-- Personal Information -->
+                    <h6 class="text-muted mb-3"><i class="bi bi-person me-1"></i>Personal Information</h6>
+
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" value="{{ student.full_name }}" required placeholder="e.g. Ahmad Khan">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ student.email }}" required placeholder="e.g. student@university.edu">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">Phone</label>
+                            <input type="text" class="form-control" id="phone" name="phone" value="{{ student.phone or '' }}" placeholder="e.g. +92 300 1234567">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="roll_number" class="form-label">Roll Number</label>
+                        <input type="text" class="form-control" id="roll_number" name="roll_number" value="{{ student.roll_number or '' }}" placeholder="e.g. FA21-BCS-001">
+                    </div>
+
+                    <hr>
+
+                    <!-- Academic Information -->
+                    <h6 class="text-muted mb-3"><i class="bi bi-mortarboard me-1"></i>Academic Information</h6>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="department_id" class="form-label">Department <span class="text-danger">*</span></label>
+                            <select class="form-select" id="department_id" name="department_id" required>
+                                <option value="" disabled>-- Select Department --</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept.id }}" {% if student.department_id == dept.id %}selected{% endif %}>{{ dept.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="program_id" class="form-label">Program</label>
+                            <select class="form-select" id="program_id" name="program_id">
+                                <option value="">-- Select Program (Optional) --</option>
+                                {% if student.program %}
+                                <option value="{{ student.program.id }}" selected>{{ student.program.name }}</option>
+                                {% endif %}
+                            </select>
+                            <div class="form-text">Programs will load based on selected department.</div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="class_id" class="form-label">Class</label>
+                            <select class="form-select" id="class_id" name="class_id">
+                                <option value="">-- Select Class (Optional) --</option>
+                                {% if student.student_class %}
+                                <option value="{{ student.student_class.id }}" selected>{{ student.student_class.name }}</option>
+                                {% endif %}
+                            </select>
+                            <div class="form-text">Classes will load based on selected program.</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="semester" class="form-label">Semester</label>
+                            <input type="number" class="form-control" id="semester" name="semester" value="{{ student.semester or '' }}" min="1" max="12" placeholder="e.g. 1">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" {% if student.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">Active</label>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('admin.students') }}" class="btn btn-light">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>Update Student
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

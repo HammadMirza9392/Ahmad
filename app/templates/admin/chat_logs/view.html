@@ -1,0 +1,130 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Chat: {{ session.title }}{% endblock %}
+
+{% block head_extra %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<style>
+.chat-view { max-width:900px; margin:0 auto; }
+.cv-msg { display:flex; gap:12px; margin-bottom:20px; animation:fadeIn 0.3s ease; }
+.cv-msg.user { flex-direction:row-reverse; }
+.cv-avatar {
+    width:36px;height:36px;border-radius:50%;display:flex;align-items:center;
+    justify-content:center;flex-shrink:0;font-size:.85rem;font-weight:700;color:#fff;
+}
+.cv-msg.user .cv-avatar { background:linear-gradient(135deg,#667eea,#764ba2); }
+.cv-msg.assistant .cv-avatar { background:linear-gradient(135deg,#10b981,#059669); }
+.cv-bubble {
+    max-width:75%;padding:14px 18px;border-radius:16px;font-size:.9rem;line-height:1.7;
+    word-wrap:break-word;
+}
+.cv-msg.user .cv-bubble { background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-bottom-right-radius:4px; }
+.cv-msg.assistant .cv-bubble { background:#fff;border:1px solid #e8ecf0;border-bottom-left-radius:4px; }
+.cv-bubble pre { background:#1e1e2e;border-radius:8px;overflow:hidden;margin:8px 0; }
+.cv-bubble pre code { display:block;padding:12px;font-size:.82rem;color:#cdd6f4; }
+.cv-bubble code:not(pre code) { background:rgba(102,126,234,.1);color:#667eea;padding:1px 5px;border-radius:4px;font-size:.82rem; }
+.cv-bubble table { width:100%;border-collapse:collapse;margin:8px 0;font-size:.85rem; }
+.cv-bubble th,.cv-bubble td { border:1px solid #e2e8f0;padding:6px 10px; }
+.cv-bubble th { background:#f8fafc; }
+.cv-meta { font-size:.7rem;color:#94a3b8;margin-top:4px; }
+.cv-msg.user .cv-meta { text-align:right; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-chat-dots me-2"></i>{{ session.title or 'Chat Session' }}</h1>
+        <div class="text-muted small">
+            <i class="bi bi-person me-1"></i>{{ session.user.full_name }} ({{ session.user.email }})
+            {% if session.user.roll_number %} &middot; Roll: {{ session.user.roll_number }}{% endif %}
+            &middot; {{ session.created_at.strftime('%b %d, %Y at %I:%M %p') }}
+        </div>
+    </div>
+    <a href="{{ url_for('admin.chat_logs') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<!-- Session Info Card -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card p-3 text-center">
+            <div class="text-muted small">Messages</div>
+            <div class="fw-bold fs-5">{{ messages|length }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 text-center">
+            <div class="text-muted small">Department</div>
+            <div class="fw-bold">{{ session.user.department.name if session.user.department else 'N/A' }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 text-center">
+            <div class="text-muted small">Program</div>
+            <div class="fw-bold">{{ session.user.program.name if session.user.program else 'N/A' }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 text-center">
+            <div class="text-muted small">Class</div>
+            <div class="fw-bold">{{ session.user.student_class.name if session.user.student_class else 'N/A' }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Chat Messages -->
+<div class="card">
+    <div class="card-body p-4">
+        <div class="chat-view">
+            {% if messages %}
+            {% for msg in messages %}
+            <div class="cv-msg {{ msg.role }}">
+                <div class="cv-avatar">
+                    {% if msg.role == 'user' %}{{ session.user.full_name[0]|upper }}{% else %}<i class="bi bi-robot"></i>{% endif %}
+                </div>
+                <div>
+                    <div class="cv-bubble {% if msg.role == 'assistant' %}md-content{% endif %}">
+                        {% if msg.role == 'assistant' %}
+                        <div class="rendered-md">{{ msg.content }}</div>
+                        {% else %}
+                        {{ msg.content }}
+                        {% endif %}
+                    </div>
+                    <div class="cv-meta">
+                        {{ msg.created_at.strftime('%I:%M %p') }}
+                        {% if msg.provider_used %} &middot; {{ msg.provider_used }}{% endif %}
+                        {% if msg.response_time_ms %} &middot; {{ (msg.response_time_ms / 1000)|round(1) }}s{% endif %}
+                        {% if msg.is_liked == true %} &middot; <i class="bi bi-hand-thumbs-up-fill text-success"></i>{% elif msg.is_liked == false %} &middot; <i class="bi bi-hand-thumbs-down-fill text-danger"></i>{% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-chat-dots display-4 d-block mb-2" style="opacity:.2;"></i>
+                <p>No messages in this session.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+if (typeof marked !== 'undefined') {
+    marked.setOptions({
+        highlight: function(code, lang) {
+            if (typeof hljs !== 'undefined' && lang && hljs.getLanguage(lang)) return hljs.highlight(code, {language: lang}).value;
+            return typeof hljs !== 'undefined' ? hljs.highlightAuto(code).value : code;
+        },
+        breaks: true, gfm: true
+    });
+    document.querySelectorAll('.rendered-md').forEach(el => {
+        el.innerHTML = marked.parse(el.textContent);
+    });
+}
+</script>
+{% endblock %}

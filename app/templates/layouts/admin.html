@@ -1,0 +1,202 @@
+{% extends "layouts/base.html" %}
+
+{% block body %}
+<!-- Sidebar Overlay (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        {% if institution and institution.logo %}
+        <img src="{{ institution.logo }}" alt="Logo">
+        {% else %}
+        <div class="avatar" style="width:38px;height:38px;border-radius:8px;background:linear-gradient(135deg,#667eea,#764ba2);">
+            <i class="bi bi-mortarboard-fill"></i>
+        </div>
+        {% endif %}
+        <h5>{{ institution.name if institution else 'LMS' }}</h5>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="sidebar-section">Main</div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                <i class="bi bi-grid-1x2-fill"></i> Dashboard
+            </a>
+        </div>
+
+        <div class="sidebar-section">Management</div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.institution') }}" class="nav-link {% if 'institution' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-building"></i> Institution
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.cms_pages') }}" class="nav-link {% if 'cms' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-file-earmark-richtext"></i> CMS Pages
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.departments') }}" class="nav-link {% if 'department' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-diagram-3"></i> Departments
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.programs') }}" class="nav-link {% if 'program' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-journal-bookmark"></i> Programs
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.classes') }}" class="nav-link {% if 'class' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-people"></i> Classes
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.subjects') }}" class="nav-link {% if 'subject' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-book"></i> Subjects
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.students') }}" class="nav-link {% if 'student' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-person-badge"></i> Students
+            </a>
+        </div>
+
+        <div class="sidebar-section">Content</div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.knowledge_base') }}" class="nav-link {% if 'knowledge' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-database"></i> Knowledge Base
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.downloads') }}" class="nav-link {% if 'download' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-cloud-download"></i> Downloads
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.gallery') }}" class="nav-link {% if 'gallery' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-images"></i> Gallery
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.events') }}" class="nav-link {% if 'event' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-calendar-event"></i> Events
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.news') }}" class="nav-link {% if 'news' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-newspaper"></i> News
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.faqs') }}" class="nav-link {% if 'faq' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-question-circle"></i> FAQs
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.notifications') }}" class="nav-link {% if 'notification' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-bell"></i> Notifications
+            </a>
+        </div>
+
+        <div class="sidebar-section">AI & Analytics</div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.ai_settings') }}" class="nav-link {% if 'ai_settings' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-robot"></i> AI Settings
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.chat_logs') }}" class="nav-link {% if 'chat_log' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-chat-dots"></i> Chat Logs
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.analytics') }}" class="nav-link {% if 'analytics' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-graph-up"></i> Analytics
+            </a>
+        </div>
+
+        <div class="sidebar-section">System</div>
+        <div class="nav-item">
+            <a href="{{ url_for('auth.profile') }}" class="nav-link">
+                <i class="bi bi-person-gear"></i> My Profile
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('auth.logout') }}" class="nav-link">
+                <i class="bi bi-box-arrow-left"></i> Logout
+            </a>
+        </div>
+    </nav>
+</aside>
+
+<!-- Main Content -->
+<div class="main-content">
+    <!-- Topbar -->
+    <header class="topbar">
+        <div class="d-flex align-items-center gap-3">
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="topbar-search">
+                <i class="bi bi-search"></i>
+                <input type="text" id="globalSearch" placeholder="Search anything..." autocomplete="off">
+                <div id="searchResults" class="dropdown-menu w-100" style="display:none;"></div>
+            </div>
+        </div>
+        <div class="topbar-actions">
+            <button class="btn-icon" id="themeToggle" title="Toggle Dark Mode">
+                <i class="bi bi-moon"></i>
+            </button>
+            <a href="{{ url_for('cms.home') }}" class="btn-icon" title="View Website" target="_blank">
+                <i class="bi bi-globe"></i>
+            </a>
+            <div class="dropdown">
+                <button class="btn-icon dropdown-toggle" data-bs-toggle="dropdown" style="border:none;">
+                    <div class="avatar">{{ current_user.full_name[0] if current_user.is_authenticated else 'A' }}</div>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><span class="dropdown-item-text fw-bold">{{ current_user.full_name if current_user.is_authenticated else 'Admin' }}</span></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}"><i class="bi bi-person me-2"></i>Profile</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('auth.change_password') }}"><i class="bi bi-key me-2"></i>Change Password</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-left me-2"></i>Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="page-content">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Sidebar toggle
+document.getElementById('sidebarToggle')?.addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('show');
+    document.getElementById('sidebarOverlay').classList.toggle('show');
+});
+document.getElementById('sidebarOverlay')?.addEventListener('click', () => {
+    document.getElementById('sidebar').classList.remove('show');
+    document.getElementById('sidebarOverlay').classList.remove('show');
+});
+</script>
+{{ super() }}
+{% endblock %}

@@ -1,0 +1,259 @@
+{% extends "layouts/cms.html" %}
+
+{% block title %}{{ page.title if page else 'Page' }}{% endblock %}
+
+{% block content %}
+<!-- Page Banner -->
+<section class="page-banner">
+    <div class="container">
+        <h1 class="fw-bold mb-2">{{ page.title if page else 'Page' }}</h1>
+        <p class="mb-0">
+            <a href="{{ url_for('cms.home') }}" class="text-white-50 text-decoration-none">Home</a>
+            <span class="mx-2 text-white-50">/</span>
+            <span>{{ page.title if page else '' }}</span>
+        </p>
+    </div>
+</section>
+
+<!-- ===== FAQ Page ===== -->
+{% if page and page.slug == 'faq' %}
+<section class="section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                {% if faqs is defined and faqs %}
+                <div class="accordion" id="faqAccordion">
+                    {% for faq in faqs %}
+                    <div class="accordion-item border rounded-3 mb-2 overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-bold" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#faq{{ faq.id }}" style="font-size:0.95rem;">
+                                {{ faq.question }}
+                            </button>
+                        </h2>
+                        <div id="faq{{ faq.id }}" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted" style="line-height:1.8;">
+                                {{ faq.answer | markdown }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-question-circle display-3 text-muted d-block mb-3"></i>
+                    <h5 class="text-muted">No FAQs available yet.</h5>
+                    <p class="text-muted">Please check back later.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== News Page ===== -->
+{% elif page and page.slug == 'news' %}
+<section class="section">
+    <div class="container">
+        {% if news_list is defined and news_list and news_list.items %}
+        <div class="row g-4">
+            {% for article in news_list.items %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    {% if article.image %}
+                    <img src="{{ article.image }}" class="card-img-top" alt="{{ article.title }}" style="height:200px;object-fit:cover;">
+                    {% else %}
+                    <div class="d-flex align-items-center justify-content-center card-img-top" style="height:200px;background:linear-gradient(135deg,#667eea,#764ba2);">
+                        <i class="bi bi-newspaper fs-1 text-white"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold" style="font-size:1rem;">{{ article.title }}</h5>
+                        <p class="card-text text-muted small">{{ article.excerpt or '' }}</p>
+                        <small class="text-muted"><i class="bi bi-calendar3 me-1"></i>{{ article.published_at.strftime('%b %d, %Y') if article.published_at else '' }}</small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-newspaper display-3 text-muted d-block mb-3"></i>
+            <h5 class="text-muted">No news articles yet.</h5>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- ===== Events Page ===== -->
+{% elif page and page.slug == 'events' %}
+<section class="section">
+    <div class="container">
+        {% if events_list is defined and events_list and events_list.items %}
+        <div class="row g-4">
+            {% for event in events_list.items %}
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body d-flex gap-3 p-4">
+                        <div class="text-center flex-shrink-0" style="min-width:65px;">
+                            {% if event.event_date %}
+                            <div class="rounded-3 p-2" style="background:linear-gradient(135deg,#1a56db,#7c3aed);">
+                                <div class="text-white fw-bold" style="font-size:1.5rem;line-height:1;">{{ event.event_date.strftime('%d') }}</div>
+                                <div class="text-white small" style="opacity:0.8;">{{ event.event_date.strftime('%b') }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1">{{ event.title }}</h5>
+                            {% if event.venue %}<p class="text-muted small mb-1"><i class="bi bi-geo-alt me-1"></i>{{ event.venue }}</p>{% endif %}
+                            {% if event.description %}<p class="text-muted small mb-0">{{ event.description[:150] }}</p>{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-calendar-event display-3 text-muted d-block mb-3"></i>
+            <h5 class="text-muted">No upcoming events.</h5>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- ===== Gallery Page ===== -->
+{% elif page and page.slug == 'gallery' %}
+<section class="section">
+    <div class="container">
+        {% if albums is defined and albums %}
+        {% for album in albums %}
+        <div class="mb-5">
+            <h4 class="fw-bold mb-3"><i class="bi bi-images me-2 text-primary"></i>{{ album.title }}</h4>
+            {% if album.description %}<p class="text-muted mb-3">{{ album.description }}</p>{% endif %}
+            <div class="row g-3">
+                {% for image in album.images %}
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="overflow-hidden rounded-3 shadow-sm">
+                        <img src="{{ image.image }}" alt="{{ image.title or album.title }}" class="img-fluid w-100" style="height:180px;object-fit:cover;">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-images display-3 text-muted d-block mb-3"></i>
+            <h5 class="text-muted">No gallery albums yet.</h5>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- ===== Downloads Page ===== -->
+{% elif page and page.slug == 'downloads' %}
+<section class="section">
+    <div class="container">
+        {% set dl_items = downloads.items if downloads is defined and downloads.items is defined else [] %}
+        {% if dl_items %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width:45%;">Title</th>
+                                <th>Category</th>
+                                <th>Type</th>
+                                <th>Size</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dl in dl_items %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold" style="font-size:0.9rem;">{{ dl.title }}</div>
+                                    {% if dl.description %}<small class="text-muted">{{ dl.description[:80] }}</small>{% endif %}
+                                </td>
+                                <td><span class="badge bg-primary bg-opacity-10 text-primary">{{ dl.category | replace('_', ' ') | title }}</span></td>
+                                <td><small class="text-muted text-uppercase">{{ dl.file_type or 'File' }}</small></td>
+                                <td><small class="text-muted">{{ dl.file_size | filesize if dl.file_size else '' }}</small></td>
+                                <td>
+                                    {% if current_user.is_authenticated %}
+                                    <a href="{{ url_for('student.download_file', dl_id=dl.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-download"></i></a>
+                                    {% else %}
+                                    <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline-secondary" title="Login to download"><i class="bi bi-lock"></i></a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-cloud-download display-3 text-muted d-block mb-3"></i>
+            <h5 class="text-muted">No downloads available yet.</h5>
+            <p class="text-muted">Resources will be uploaded soon.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- ===== Generic / Custom Page (Admission, Privacy, Terms, etc.) ===== -->
+{% else %}
+<section class="section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                {% if page and page.content %}
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4 p-lg-5 cms-content">
+                        {{ page.content | markdown }}
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-file-text display-3 text-muted d-block mb-3"></i>
+                    <h4 class="text-muted">Page content is being prepared.</h4>
+                    <p class="text-muted">Please check back later or contact the administration.</p>
+                    <a href="{{ url_for('cms.page', slug='contact') }}" class="btn btn-outline-primary mt-2">
+                        <i class="bi bi-envelope me-1"></i>Contact Us
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Page Sections -->
+{% if page and page.sections %}
+{% for section in page.sections %}
+{% if section.is_visible %}
+<section class="section {% if loop.index is even %}bg-light{% endif %}">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                {% if section.title %}<h2 class="section-title">{{ section.title }}</h2>{% endif %}
+                {% if section.image %}
+                <div class="text-center mb-4">
+                    <img src="{{ section.image }}" alt="{{ section.title }}" class="img-fluid rounded-3 shadow-sm" style="max-height:400px;object-fit:cover;">
+                </div>
+                {% endif %}
+                {% if section.content %}
+                <div class="cms-content">{{ section.content | markdown }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endblock %}

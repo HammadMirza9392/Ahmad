@@ -1,0 +1,149 @@
+{% extends "layouts/admin.html" %}
+
+{% block title %}Knowledge Base{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-journal-richtext me-2"></i>Knowledge Base</h1>
+    <a href="{{ url_for('admin.knowledge_create') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>Create Entry
+    </a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<!-- Search -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form action="{{ url_for('admin.knowledge_base') }}" method="GET" class="row g-3 align-items-end">
+            <div class="col-md-9">
+                <label for="search" class="form-label">Search</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="search" name="search" value="{{ search or '' }}" placeholder="Search by title, department, or subject...">
+                </div>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-grow-1">
+                    <i class="bi bi-search me-1"></i>Search
+                </button>
+                <a href="{{ url_for('admin.knowledge_base') }}" class="btn btn-outline-secondary" title="Clear Search">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Knowledge Base Table -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">All Entries</h5>
+        <span class="badge bg-primary">{{ pagination.total }} total</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Title</th>
+                        <th scope="col">Department</th>
+                        <th scope="col">Subject</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Created</th>
+                        <th scope="col" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for kb in pagination.items %}
+                    <tr>
+                        <td>{{ (pagination.page - 1) * pagination.per_page + loop.index }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ kb.title }}</div>
+                        </td>
+                        <td>{{ kb.department.name if kb.department else '-' }}</td>
+                        <td>{{ kb.subject.name if kb.subject else '-' }}</td>
+                        <td>
+                            {% if kb.status == 'published' %}
+                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Published</span>
+                            {% elif kb.status == 'draft' %}
+                            <span class="badge bg-warning text-dark"><i class="bi bi-pencil me-1"></i>Draft</span>
+                            {% elif kb.status == 'archived' %}
+                            <span class="badge bg-secondary"><i class="bi bi-archive me-1"></i>Archived</span>
+                            {% else %}
+                            <span class="badge bg-light text-dark">{{ kb.status or '-' }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="text-muted" title="{{ kb.created_at }}">
+                                {{ kb.created_at.strftime('%d %b %Y') if kb.created_at else '-' }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ url_for('admin.knowledge_edit', kb_id=kb.id) }}" class="btn btn-sm btn-outline-primary me-1" title="Edit">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <form action="{{ url_for('admin.knowledge_delete', kb_id=kb.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this knowledge base entry?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                            No knowledge base entries found.
+                            {% if search %}Try adjusting your search criteria.{% else %}Click "Create Entry" to add one.{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination.pages > 1 %}
+    <div class="card-footer bg-white">
+        <nav aria-label="Knowledge base pagination">
+            <ul class="pagination justify-content-center mb-0">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.knowledge_base', page=pagination.prev_num, search=search) }}" aria-label="Previous">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin.knowledge_base', page=page_num, search=search) }}">{{ page_num }}</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">&hellip;</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.knowledge_base', page=pagination.next_num, search=search) }}" aria-label="Next">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

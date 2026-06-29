@@ -1,0 +1,95 @@
+{% extends "layouts/admin.html" %}
+
+{% block title %}Create FAQ{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1"><i class="bi bi-question-circle me-2"></i>Create FAQ</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.faqs') }}">FAQs</a></li>
+                    <li class="breadcrumb-item active">Create</li>
+                </ol>
+            </nav>
+        </div>
+        <a href="{{ url_for('admin.faqs') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back to FAQs
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0"><i class="bi bi-plus-circle me-2"></i>New FAQ Entry</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.faq_create') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="mb-3">
+                            <label for="question" class="form-label">Question <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="question" name="question"
+                                   placeholder="Enter the frequently asked question"
+                                   required maxlength="500">
+                            <div class="form-text">The question that students or users commonly ask.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="answer" class="form-label">Answer <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="answer" name="answer" rows="6"
+                                      placeholder="Provide a detailed answer to the question"
+                                      required></textarea>
+                            <div class="form-text">Provide a clear and comprehensive answer.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <input type="text" class="form-control" id="category" name="category"
+                                   placeholder="e.g., Admissions, Exams, General"
+                                   maxlength="100">
+                            <div class="form-text">Categorize the FAQ for easier organization and filtering.</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="sort_order" class="form-label">Sort Order</label>
+                                <input type="number" class="form-control" id="sort_order" name="sort_order"
+                                       value="0" min="0" step="1"
+                                       placeholder="Display order (lower = first)">
+                                <div class="form-text">Lower numbers appear first in the list.</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="mt-md-4 pt-md-2">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="is_active"
+                                               name="is_active" value="1" checked>
+                                        <label class="form-check-label" for="is_active">
+                                            <i class="bi bi-eye me-1"></i>Active
+                                        </label>
+                                    </div>
+                                    <div class="form-text">Inactive FAQs will not be visible to users.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('admin.faqs') }}" class="btn btn-light">
+                                <i class="bi bi-x-lg me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-1"></i>Create FAQ
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

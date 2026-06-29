@@ -1,0 +1,137 @@
+{% extends "layouts/student.html" %}
+
+{% block title %}Downloads{% endblock %}
+{% block page_title %}Downloads{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Downloads</h4>
+        <p class="text-muted mb-0">Access course materials, resources and files</p>
+    </div>
+</div>
+
+<!-- Category Filter -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3 px-4">
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <span class="text-muted small fw-semibold me-2">Filter:</span>
+            <a href="{{ url_for('student.downloads') }}"
+               class="btn btn-sm {{ 'btn-primary' if not request.args.get('category') else 'btn-outline-secondary' }}">
+                All
+            </a>
+            {% for cat in categories %}
+            <a href="{{ url_for('student.downloads', category=cat) }}"
+               class="btn btn-sm {{ 'btn-primary' if request.args.get('category') == cat else 'btn-outline-secondary' }}">
+                {{ cat|capitalize }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Files List -->
+{% if pagination.items %}
+<div class="row g-3">
+    {% for dl in pagination.items %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-start gap-3">
+                    {% set ext = dl.original_name.rsplit('.', 1)[-1]|lower if dl.original_name else '' %}
+                    {% if ext in ['pdf'] %}
+                        {% set icon = 'bi-file-earmark-pdf-fill' %}
+                        {% set icon_color = '#dc3545' %}
+                    {% elif ext in ['doc', 'docx'] %}
+                        {% set icon = 'bi-file-earmark-word-fill' %}
+                        {% set icon_color = '#0d6efd' %}
+                    {% elif ext in ['xls', 'xlsx'] %}
+                        {% set icon = 'bi-file-earmark-excel-fill' %}
+                        {% set icon_color = '#198754' %}
+                    {% elif ext in ['ppt', 'pptx'] %}
+                        {% set icon = 'bi-file-earmark-ppt-fill' %}
+                        {% set icon_color = '#fd7e14' %}
+                    {% elif ext in ['jpg', 'jpeg', 'png', 'gif'] %}
+                        {% set icon = 'bi-file-earmark-image-fill' %}
+                        {% set icon_color = '#6f42c1' %}
+                    {% elif ext in ['zip', 'rar', '7z'] %}
+                        {% set icon = 'bi-file-earmark-zip-fill' %}
+                        {% set icon_color = '#ffc107' %}
+                    {% else %}
+                        {% set icon = 'bi-file-earmark-fill' %}
+                        {% set icon_color = '#6c757d' %}
+                    {% endif %}
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                         style="width:48px;height:48px;background:{{ icon_color }}15;color:{{ icon_color }};font-size:1.4rem;">
+                        <i class="bi {{ icon }}"></i>
+                    </div>
+                    <div class="flex-grow-1 min-w-0">
+                        <h6 class="fw-semibold mb-1 text-truncate" title="{{ dl.title }}">{{ dl.title }}</h6>
+                        <div class="d-flex gap-2 flex-wrap">
+                            {% if dl.category %}
+                            <span class="badge bg-light text-dark">{{ dl.category|capitalize }}</span>
+                            {% endif %}
+                            <small class="text-muted">{{ dl.original_name }}</small>
+                        </div>
+                    </div>
+                </div>
+                {% if dl.description %}
+                <p class="text-muted small mt-2 mb-0">{{ dl.description|truncate(80) }}</p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent border-0 pb-3 px-4 d-flex align-items-center justify-content-between">
+                <small class="text-muted">
+                    <i class="bi bi-download me-1"></i>{{ dl.download_count or 0 }} downloads
+                </small>
+                <a href="{{ url_for('student.download_file', dl_id=dl.id) }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-download me-1"></i>Download
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if pagination.pages > 1 %}
+<nav class="mt-4 d-flex justify-content-center">
+    <ul class="pagination">
+        <li class="page-item {{ 'disabled' if not pagination.has_prev }}">
+            <a class="page-link" href="{{ url_for('student.downloads', page=pagination.prev_num, category=request.args.get('category','')) }}">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        </li>
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if p %}
+            <li class="page-item {{ 'active' if p == pagination.page }}">
+                <a class="page-link" href="{{ url_for('student.downloads', page=p, category=request.args.get('category','')) }}">{{ p }}</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+        {% endfor %}
+        <li class="page-item {{ 'disabled' if not pagination.has_next }}">
+            <a class="page-link" href="{{ url_for('student.downloads', page=pagination.next_num, category=request.args.get('category','')) }}">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-cloud-download" style="font-size:3rem;opacity:.2;"></i>
+        <h5 class="mt-3 text-muted">No Downloads Available</h5>
+        <p class="text-muted mb-0">
+            {% if request.args.get('category') %}
+            No files found in this category. <a href="{{ url_for('student.downloads') }}">View all</a>
+            {% else %}
+            No files have been uploaded for your department yet.
+            {% endif %}
+        </p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

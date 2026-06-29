@@ -1,0 +1,275 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Analytics{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1><i class="bi bi-graph-up me-2"></i>Analytics</h1>
+    <span class="text-muted small">Detailed usage statistics and trends</span>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-sm-6">
+        <div class="card stat-card fade-in">
+            <div class="stat-icon gradient-primary"><i class="bi bi-people-fill"></i></div>
+            <div class="stat-info">
+                <h3>{{ stats.total_students }}</h3>
+                <p>Total Students</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="card stat-card fade-in">
+            <div class="stat-icon gradient-success"><i class="bi bi-diagram-3-fill"></i></div>
+            <div class="stat-info">
+                <h3>{{ stats.total_departments }}</h3>
+                <p>Departments</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="card stat-card fade-in">
+            <div class="stat-icon gradient-warning"><i class="bi bi-book-fill"></i></div>
+            <div class="stat-info">
+                <h3>{{ stats.total_subjects }}</h3>
+                <p>Subjects</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="card stat-card fade-in">
+            <div class="stat-icon gradient-info"><i class="bi bi-chat-dots-fill"></i></div>
+            <div class="stat-info">
+                <h3>{{ stats.total_chats }}</h3>
+                <p>Total Chats</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="card stat-card fade-in">
+            <div class="stat-icon gradient-secondary"><i class="bi bi-robot"></i></div>
+            <div class="stat-info">
+                <h3>{{ stats.ai_requests }}</h3>
+                <p>AI Requests</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="card stat-card fade-in">
+            <div class="stat-icon gradient-teal"><i class="bi bi-person-check-fill"></i></div>
+            <div class="stat-info">
+                <h3>{{ stats.active_users }}</h3>
+                <p>Active Users (7d)</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="card stat-card fade-in">
+            <div class="stat-icon gradient-danger"><i class="bi bi-cloud-download-fill"></i></div>
+            <div class="stat-info">
+                <h3>{{ stats.total_downloads }}</h3>
+                <p>Downloads</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-sm-6">
+        <div class="card stat-card fade-in">
+            <div class="stat-icon gradient-dark"><i class="bi bi-database-fill"></i></div>
+            <div class="stat-info">
+                <h3>{{ stats.knowledge_records }}</h3>
+                <p>Knowledge Base</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 1: Daily + AI Usage -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="card p-4">
+            <h6 class="fw-bold mb-3"><i class="bi bi-bar-chart me-2"></i>Daily Chats (Last 7 Days)</h6>
+            <canvas id="dailyChatsChart" height="250"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card p-4">
+            <h6 class="fw-bold mb-3"><i class="bi bi-pie-chart me-2"></i>AI Provider Usage</h6>
+            <canvas id="aiUsageChart" height="250"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 2: Weekly + Monthly -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="card p-4">
+            <h6 class="fw-bold mb-3"><i class="bi bi-calendar-week me-2"></i>Weekly Chats (Last 4 Weeks)</h6>
+            <canvas id="weeklyChatsChart" height="250"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card p-4">
+            <h6 class="fw-bold mb-3"><i class="bi bi-calendar3 me-2"></i>Monthly Chats (Last 12 Months)</h6>
+            <canvas id="monthlyChatsChart" height="250"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Tables Row: Trending, Active Students, Active Departments -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-4">
+        <div class="card p-4">
+            <h6 class="fw-bold mb-3"><i class="bi bi-fire me-2"></i>Trending Questions</h6>
+            {% if trending %}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead><tr><th>Question</th><th>Count</th></tr></thead>
+                    <tbody>
+                    {% for t in trending %}
+                    <tr>
+                        <td class="small">{{ t.question_text[:60] }}{% if t.question_text|length > 60 %}...{% endif %}</td>
+                        <td><span class="badge bg-primary">{{ t.count }}</span></td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted small">No trending questions yet.</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card p-4">
+            <h6 class="fw-bold mb-3"><i class="bi bi-star me-2"></i>Most Active Students</h6>
+            {% if active_students %}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead><tr><th>Student</th><th>Roll #</th><th>Chats</th></tr></thead>
+                    <tbody>
+                    {% for s in active_students %}
+                    <tr>
+                        <td class="small">{{ s.name }}</td>
+                        <td class="small text-muted">{{ s.roll }}</td>
+                        <td><span class="badge bg-success">{{ s.chats }}</span></td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted small">No student activity yet.</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card p-4">
+            <h6 class="fw-bold mb-3"><i class="bi bi-diagram-3 me-2"></i>Most Active Departments</h6>
+            {% if active_depts %}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead><tr><th>Department</th><th>Chats</th></tr></thead>
+                    <tbody>
+                    {% for d in active_depts %}
+                    <tr>
+                        <td class="small">{{ d.name }}</td>
+                        <td><span class="badge bg-info">{{ d.chats }}</span></td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted small">No department activity yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+// Daily Chats Chart
+const dailyData = {{ daily_chats | tojson }};
+new Chart(document.getElementById('dailyChatsChart'), {
+    type: 'bar',
+    data: {
+        labels: dailyData.map(d => d.date),
+        datasets: [{
+            label: 'Chats',
+            data: dailyData.map(d => d.count),
+            backgroundColor: 'rgba(26, 86, 219, 0.7)',
+            borderRadius: 8,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+});
+
+// AI Usage Doughnut
+const aiData = {{ ai_usage | tojson }};
+if (aiData.length > 0) {
+    new Chart(document.getElementById('aiUsageChart'), {
+        type: 'doughnut',
+        data: {
+            labels: aiData.map(d => d.provider),
+            datasets: [{
+                data: aiData.map(d => d.count),
+                backgroundColor: ['#667eea', '#764ba2', '#11998e', '#f5576c', '#4facfe', '#43e97b'],
+            }]
+        },
+        options: { responsive: true }
+    });
+} else {
+    document.getElementById('aiUsageChart').parentElement.innerHTML += '<p class="text-muted small text-center">No AI usage data yet.</p>';
+}
+
+// Weekly Chats Chart
+const weeklyData = {{ weekly_chats | tojson }};
+new Chart(document.getElementById('weeklyChatsChart'), {
+    type: 'bar',
+    data: {
+        labels: weeklyData.map(d => d.week),
+        datasets: [{
+            label: 'Chats',
+            data: weeklyData.map(d => d.count),
+            backgroundColor: 'rgba(17, 153, 142, 0.7)',
+            borderRadius: 8,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+});
+
+// Monthly Chats Line Chart
+const monthlyData = {{ monthly_chats | tojson }};
+new Chart(document.getElementById('monthlyChatsChart'), {
+    type: 'line',
+    data: {
+        labels: monthlyData.map(d => d.month),
+        datasets: [{
+            label: 'Chats',
+            data: monthlyData.map(d => d.count),
+            borderColor: '#764ba2',
+            backgroundColor: 'rgba(124, 58, 237, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#764ba2',
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+});
+</script>
+{% endblock %}

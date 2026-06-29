@@ -1,0 +1,176 @@
+{% extends "layouts/admin.html" %}
+
+{% block title %}Chat Logs{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1"><i class="bi bi-chat-dots me-2"></i>Chat Logs</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Chat Logs</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('admin.chat_logs') }}" class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <label for="search" class="form-label">
+                        <i class="bi bi-search me-1"></i>Search Chat Logs
+                    </label>
+                    <input type="text" class="form-control" id="search" name="search"
+                           value="{{ search or '' }}"
+                           placeholder="Search by session title, user name, or content...">
+                </div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1">
+                        <i class="bi bi-search me-1"></i>Search
+                    </button>
+                    {% if search %}
+                    <a href="{{ url_for('admin.chat_logs') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-lg me-1"></i>Clear
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-list-ul me-2"></i>Chat Sessions
+                {% if search %}
+                <small class="text-muted fw-normal">- Results for "{{ search }}"</small>
+                {% endif %}
+            </h5>
+            <span class="badge bg-secondary">{{ pagination.total }} total</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">User</th>
+                            <th scope="col">Title</th>
+                            <th scope="col">Messages</th>
+                            <th scope="col">Department</th>
+                            <th scope="col">Created</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for session in pagination.items %}
+                        <tr>
+                            <td>
+                                <code class="text-primary">#{{ session.id }}</code>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-2"
+                                         style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                        <i class="bi bi-person-fill"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold">{{ session.user.full_name }}</div>
+                                        {% if session.user.email %}
+                                        <small class="text-muted">{{ session.user.email }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-truncate d-inline-block" style="max-width: 250px;"
+                                      title="{{ session.title or 'Untitled Session' }}">
+                                    {{ session.title or 'Untitled Session' }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-info text-dark">
+                                    <i class="bi bi-chat-left-text me-1"></i>{{ session.messages.count() }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if session.department %}
+                                <span class="badge bg-outline-secondary border text-dark">
+                                    <i class="bi bi-building me-1"></i>{{ session.department.name }}
+                                </span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar me-1"></i>{{ session.created_at.strftime('%Y-%m-%d') }}
+                                    <br>{{ session.created_at.strftime('%H:%M') }}
+                                </small>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin.chat_view', session_id=session.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye me-1"></i>View Chat
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="bi bi-chat-square-dots fs-1 d-block mb-2"></i>
+                                    {% if search %}
+                                    <p class="mb-1">No chat sessions found for "{{ search }}".</p>
+                                    <a href="{{ url_for('admin.chat_logs') }}" class="btn btn-sm btn-outline-primary mt-2">
+                                        <i class="bi bi-x-lg me-1"></i>Clear Search
+                                    </a>
+                                    {% else %}
+                                    <p class="mb-0">No chat sessions recorded yet.</p>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if pagination.pages > 1 %}
+        <div class="card-footer bg-white">
+            <nav aria-label="Chat logs pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                        <a class="page-link"
+                           href="{{ url_for('admin.chat_logs', page=pagination.prev_num, search=search) }}">
+                            <i class="bi bi-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                        <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                            <a class="page-link"
+                               href="{{ url_for('admin.chat_logs', page=page_num, search=search) }}">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">&hellip;</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                        <a class="page-link"
+                           href="{{ url_for('admin.chat_logs', page=pagination.next_num, search=search) }}">
+                            Next <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

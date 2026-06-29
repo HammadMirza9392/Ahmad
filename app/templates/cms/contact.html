@@ -1,0 +1,215 @@
+{% extends "layouts/cms.html" %}
+
+{% block title %}Contact Us{% endblock %}
+
+{% block content %}
+<!-- Page Banner -->
+<section class="hero-section" style="padding:3.5rem 0;">
+    <div class="container">
+        <h1 class="fw-bold mb-2">Contact Us</h1>
+        <p class="mb-0">
+            <a href="{{ url_for('cms.home') }}" class="text-white-50 text-decoration-none">Home</a>
+            <span class="mx-2 text-white-50">/</span>
+            <span>Contact Us</span>
+        </p>
+    </div>
+</section>
+
+<!-- Contact Info Cards -->
+<section class="section">
+    <div class="container">
+        <div class="row g-4 mb-5">
+            {% if institution and institution.address %}
+            <div class="col-md-6 col-lg-3">
+                <div class="card border-0 shadow-sm text-center h-100">
+                    <div class="card-body p-4">
+                        <div class="gradient-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width:56px;height:56px;">
+                            <i class="bi bi-geo-alt fs-4 text-white"></i>
+                        </div>
+                        <h6 class="fw-bold">Address</h6>
+                        <p class="text-muted small mb-0">{{ institution.address }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% if institution and institution.phone %}
+            <div class="col-md-6 col-lg-3">
+                <div class="card border-0 shadow-sm text-center h-100">
+                    <div class="card-body p-4">
+                        <div class="gradient-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width:56px;height:56px;">
+                            <i class="bi bi-telephone fs-4 text-white"></i>
+                        </div>
+                        <h6 class="fw-bold">Phone</h6>
+                        <p class="text-muted small mb-0">
+                            <a href="tel:{{ institution.phone }}" class="text-muted text-decoration-none">{{ institution.phone }}</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% if institution and institution.email %}
+            <div class="col-md-6 col-lg-3">
+                <div class="card border-0 shadow-sm text-center h-100">
+                    <div class="card-body p-4">
+                        <div class="gradient-info rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width:56px;height:56px;">
+                            <i class="bi bi-envelope fs-4 text-white"></i>
+                        </div>
+                        <h6 class="fw-bold">Email</h6>
+                        <p class="text-muted small mb-0">
+                            <a href="mailto:{{ institution.email }}" class="text-muted text-decoration-none">{{ institution.email }}</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% if institution and institution.office_timing %}
+            <div class="col-md-6 col-lg-3">
+                <div class="card border-0 shadow-sm text-center h-100">
+                    <div class="card-body p-4">
+                        <div class="gradient-warning rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width:56px;height:56px;">
+                            <i class="bi bi-clock fs-4 text-white"></i>
+                        </div>
+                        <h6 class="fw-bold">Office Hours</h6>
+                        <p class="text-muted small mb-0">{{ institution.office_timing }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="row g-5">
+            <!-- Google Map -->
+            <div class="col-lg-7">
+                {% if institution and institution.google_map %}
+                <div class="card border-0 shadow-sm overflow-hidden" style="height:100%;min-height:400px;">
+                    <div class="ratio" style="--bs-aspect-ratio:75%;">
+                        {{ institution.google_map | safe }}
+                    </div>
+                </div>
+                {% else %}
+                <div class="card border-0 shadow-sm d-flex align-items-center justify-content-center" style="min-height:400px;background:var(--bg-body);">
+                    <div class="text-center text-muted">
+                        <i class="bi bi-map display-4 mb-3 d-block"></i>
+                        <p>Map location will be displayed here.</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Contact Details & Social -->
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <h4 class="fw-bold mb-4">Get in Touch</h4>
+
+                        {% if institution %}
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-muted mb-3">
+                                <i class="bi bi-building me-2"></i>{{ institution.name }}
+                            </h6>
+
+                            {% if institution.address %}
+                            <div class="d-flex gap-3 mb-3">
+                                <i class="bi bi-geo-alt-fill text-primary mt-1"></i>
+                                <div>
+                                    <small class="fw-bold d-block text-muted">Address</small>
+                                    <span>{{ institution.address }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if institution.phone %}
+                            <div class="d-flex gap-3 mb-3">
+                                <i class="bi bi-telephone-fill text-primary mt-1"></i>
+                                <div>
+                                    <small class="fw-bold d-block text-muted">Phone</small>
+                                    <a href="tel:{{ institution.phone }}" class="text-decoration-none">{{ institution.phone }}</a>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if institution.email %}
+                            <div class="d-flex gap-3 mb-3">
+                                <i class="bi bi-envelope-fill text-primary mt-1"></i>
+                                <div>
+                                    <small class="fw-bold d-block text-muted">Email</small>
+                                    <a href="mailto:{{ institution.email }}" class="text-decoration-none">{{ institution.email }}</a>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if institution.website %}
+                            <div class="d-flex gap-3 mb-3">
+                                <i class="bi bi-globe text-primary mt-1"></i>
+                                <div>
+                                    <small class="fw-bold d-block text-muted">Website</small>
+                                    <a href="{{ institution.website }}" class="text-decoration-none" target="_blank">{{ institution.website }}</a>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if institution.office_timing %}
+                            <div class="d-flex gap-3 mb-3">
+                                <i class="bi bi-clock-fill text-primary mt-1"></i>
+                                <div>
+                                    <small class="fw-bold d-block text-muted">Office Hours</small>
+                                    <span>{{ institution.office_timing }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Social Links -->
+                        {% if institution.facebook or institution.twitter or institution.instagram or institution.youtube or institution.linkedin %}
+                        <div>
+                            <h6 class="fw-bold text-muted mb-3">Follow Us</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% if institution.facebook %}
+                                <a href="{{ institution.facebook }}" target="_blank" class="btn btn-outline-primary btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;" title="Facebook">
+                                    <i class="bi bi-facebook"></i>
+                                </a>
+                                {% endif %}
+                                {% if institution.twitter %}
+                                <a href="{{ institution.twitter }}" target="_blank" class="btn btn-outline-dark btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;" title="Twitter / X">
+                                    <i class="bi bi-twitter-x"></i>
+                                </a>
+                                {% endif %}
+                                {% if institution.instagram %}
+                                <a href="{{ institution.instagram }}" target="_blank" class="btn btn-outline-danger btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;" title="Instagram">
+                                    <i class="bi bi-instagram"></i>
+                                </a>
+                                {% endif %}
+                                {% if institution.youtube %}
+                                <a href="{{ institution.youtube }}" target="_blank" class="btn btn-outline-danger btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;" title="YouTube">
+                                    <i class="bi bi-youtube"></i>
+                                </a>
+                                {% endif %}
+                                {% if institution.linkedin %}
+                                <a href="{{ institution.linkedin }}" target="_blank" class="btn btn-outline-primary btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;" title="LinkedIn">
+                                    <i class="bi bi-linkedin"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Page Custom Content -->
+{% if page and page.content %}
+<section class="section" style="background:var(--bg-body);">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                {{ page.content | markdown }}
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}
