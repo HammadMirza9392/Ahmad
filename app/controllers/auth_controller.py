@@ -32,6 +32,10 @@ class AuthController:
 
         if user.is_admin():
             return redirect(url_for('admin.dashboard')), None
+        if user.is_hod():
+            return redirect(url_for('hod.dashboard')), None
+        if user.is_teacher():
+            return redirect(url_for('teacher.dashboard')), None
         return redirect(url_for('student.dashboard')), None
 
     @staticmethod
@@ -40,7 +44,6 @@ class AuthController:
             AuthService.log_action(current_user.id, 'logout', ip=request.remote_addr,
                                    ua=request.user_agent.string)
         logout_user()
-        session.clear()
         flash('You have been logged out.', 'info')
         return redirect(url_for('auth.login'))
 

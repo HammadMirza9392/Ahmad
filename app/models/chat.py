@@ -16,7 +16,8 @@ class ChatSession(db.Model):
     # Context snapshot at session creation
     department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
     program_id = db.Column(db.Integer, db.ForeignKey('programs.id'))
-    class_id = db.Column(db.Integer, db.ForeignKey('classes.id'))
+    batch_id = db.Column(db.Integer, db.ForeignKey('batches.id'))
+    semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id'))
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'))
 
     is_bookmarked = db.Column(db.Boolean, default=False)

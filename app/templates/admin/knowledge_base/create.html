@@ -56,9 +56,16 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="class_id" class="form-label">Class</label>
-                        <select class="form-select" id="class_id" name="class_id">
-                            <option value="">-- Select Class --</option>
+                        <label for="batch_id" class="form-label">Batch</label>
+                        <select class="form-select" id="batch_id" name="batch_id">
+                            <option value="">-- Select Batch --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="semester_id" class="form-label">Semester</label>
+                        <select class="form-select" id="semester_id" name="semester_id">
+                            <option value="">-- Select Semester --</option>
                         </select>
                     </div>
 
@@ -116,4 +123,27 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.getElementById('department_id').addEventListener('change', function () {
+    loadPrograms(this.value, document.getElementById('program_id'), function () {
+        document.getElementById('batch_id').innerHTML = '<option value="">-- Select Batch --</option>';
+        document.getElementById('semester_id').innerHTML = '<option value="">-- Select Semester --</option>';
+    });
+});
+document.getElementById('program_id').addEventListener('change', function () {
+    loadBatches(this.value, document.getElementById('batch_id'), function () {
+        document.getElementById('semester_id').innerHTML = '<option value="">-- Select Semester --</option>';
+    });
+});
+document.getElementById('batch_id').addEventListener('change', function () {
+    loadSemesters(this.value, document.getElementById('semester_id'));
+});
+document.getElementById('subject_id') && document.getElementById('department_id').addEventListener('change', function () {
+    loadSubjects(this.value, document.getElementById('subject_id'));
+});
+</script>
 {% endblock %}

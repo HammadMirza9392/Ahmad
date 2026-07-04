@@ -19,7 +19,7 @@ class StudentController:
         user = current_user
         sessions = ChatService.get_user_sessions(user.id)
         unread = NotificationService.unread_count(user.id)
-        subjects = DepartmentService.get_subjects_for_class(user.class_id) if user.class_id else []
+        subjects = DepartmentService.get_subjects_for_semester(user.semester_id) if user.semester_id else []
         return {
             'recent_chats': sessions[:5],
             'total_chats': len(sessions),

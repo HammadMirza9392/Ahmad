@@ -1,0 +1,41 @@
+{% extends "layouts/hod.html" %}
+{% block title %}Subjects{% endblock %}
+{% block page_title %}Subjects{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-book me-2"></i>Subjects</h1>
+    <a href="{{ url_for('hod.subject_create') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Add Subject</a>
+</div>
+
+<div class="card"><div class="card-body p-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light"><tr><th>#</th><th>Name</th><th>Code</th><th>Batch / Semester</th><th style="width:26%">Assigned Teacher</th></tr></thead>
+            <tbody>
+                {% for s in subjects %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td class="fw-semibold">{{ s.name }}</td>
+                    <td>{{ s.code or '—' }}</td>
+                    <td>{% if s.semester %}{{ s.semester.batch.label if s.semester.batch else '' }} / {{ s.semester.name }}{% else %}<span class="text-muted">Unassigned</span>{% endif %}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('hod.subject_assign_teacher', subject_id=s.id) }}" class="d-flex gap-2">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <select name="teacher_id" class="form-select form-select-sm">
+                                <option value="">— Unassigned —</option>
+                                {% for t in teachers %}<option value="{{ t.id }}" {% if s.teacher_id == t.id %}selected{% endif %}>{{ t.full_name }}</option>{% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Save</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not subjects %}
+                <tr><td colspan="5" class="text-center py-4 text-muted"><i class="bi bi-inbox fs-1 d-block mb-2"></i>No subjects yet.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div></div>
+{% endblock %}

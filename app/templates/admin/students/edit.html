@@ -50,9 +50,15 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="roll_number" class="form-label">Roll Number</label>
-                        <input type="text" class="form-control" id="roll_number" name="roll_number" value="{{ student.roll_number or '' }}" placeholder="e.g. FA21-BCS-001">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="roll_number" class="form-label">Roll Number</label>
+                            <input type="text" class="form-control" id="roll_number" name="roll_number" value="{{ student.roll_number or '' }}" placeholder="e.g. FA21-BCS-001">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="registration_number" class="form-label">Registration Number</label>
+                            <input type="text" class="form-control" id="registration_number" name="registration_number" value="{{ student.registration_number or '' }}" placeholder="e.g. 2021-CS-101">
+                        </div>
                     </div>
 
                     <hr>
@@ -84,25 +90,42 @@
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="class_id" class="form-label">Class</label>
-                            <select class="form-select" id="class_id" name="class_id">
-                                <option value="">-- Select Class (Optional) --</option>
-                                {% if student.student_class %}
-                                <option value="{{ student.student_class.id }}" selected>{{ student.student_class.name }}</option>
+                            <label for="batch_id" class="form-label">Batch</label>
+                            <select class="form-select" id="batch_id" name="batch_id">
+                                <option value="">-- Select Batch (Optional) --</option>
+                                {% if student.student_batch %}
+                                <option value="{{ student.student_batch.id }}" selected>{{ student.student_batch.label }}</option>
                                 {% endif %}
                             </select>
-                            <div class="form-text">Classes will load based on selected program.</div>
+                            <div class="form-text">Batches will load based on selected program.</div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="semester" class="form-label">Semester</label>
-                            <input type="number" class="form-control" id="semester" name="semester" value="{{ student.semester or '' }}" min="1" max="12" placeholder="e.g. 1">
+                            <label for="semester_id" class="form-label">Semester</label>
+                            <select class="form-select" id="semester_id" name="semester_id">
+                                <option value="">-- Select Semester (Optional) --</option>
+                                {% if student.student_semester %}
+                                <option value="{{ student.student_semester.id }}" selected>{{ student.student_semester.name }}</option>
+                                {% endif %}
+                            </select>
+                            <div class="form-text">Changing semester re-allocates subjects.</div>
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" {% if student.is_active %}checked{% endif %}>
-                            <label class="form-check-label" for="is_active">Active</label>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="enrollment_status" class="form-label">Enrollment Status</label>
+                            <select class="form-select" id="enrollment_status" name="enrollment_status">
+                                <option value="active" {% if student.enrollment_status == 'active' %}selected{% endif %}>Active</option>
+                                <option value="graduated" {% if student.enrollment_status == 'graduated' %}selected{% endif %}>Graduated</option>
+                                <option value="suspended" {% if student.enrollment_status == 'suspended' %}selected{% endif %}>Suspended</option>
+                                <option value="dropped" {% if student.enrollment_status == 'dropped' %}selected{% endif %}>Dropped</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3 d-flex align-items-end">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" {% if student.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active">Active</label>
+                            </div>
                         </div>
                     </div>
 
@@ -117,5 +140,28 @@
             </div>
         </div>
     </div>
+
+    <div class="col-lg-8 mt-3">
+        <form method="POST" action="{{ url_for('admin.student_promote', student_id=student.id) }}" onsubmit="return confirm('Promote this student to their next semester?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-success">
+                <i class="bi bi-arrow-up-circle me-1"></i>Promote to Next Semester
+            </button>
+        </form>
+    </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('department_id').addEventListener('change', function () {
+    loadPrograms(this.value, document.getElementById('program_id'));
+});
+document.getElementById('program_id').addEventListener('change', function () {
+    loadBatches(this.value, document.getElementById('batch_id'));
+});
+document.getElementById('batch_id').addEventListener('change', function () {
+    loadSemesters(this.value, document.getElementById('semester_id'));
+});
+</script>
 {% endblock %}

@@ -1,0 +1,90 @@
+{% extends "layouts/teacher.html" %}
+{% block title %}Edit Quiz{% endblock %}
+{% block page_title %}Quiz Builder{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-pencil-square me-2"></i>{{ quiz.title }}</h1>
+    <a href="{{ url_for('teacher.quizzes') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back</a>
+</div>
+
+<div class="row">
+    <div class="col-lg-7">
+        <div class="card mb-4">
+            <div class="card-header"><h5 class="card-title mb-0">Questions ({{ quiz.questions|length }})</h5></div>
+            <div class="card-body p-0">
+                <table class="table table-hover align-middle mb-0">
+                    <tbody>
+                        {% for question in quiz.questions %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-secondary me-2">{{ question.type }}</span>
+                                <span class="fw-semibold">{{ question.text }}</span>
+                                <div class="small text-muted">Correct: {{ question.correct_answer }} · {{ question.marks }} mark(s)</div>
+                            </td>
+                            <td class="text-end">
+                                <form method="POST" action="{{ url_for('teacher.quiz_question_delete', quiz_id=quiz.id, question_id=question.id) }}" class="d-inline" onsubmit="return confirm('Remove this question?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not quiz.questions %}
+                        <tr><td class="text-center py-4 text-muted">No questions yet. Add one on the right.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header"><h5 class="card-title mb-0">Add Question</h5></div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('teacher.quiz_edit', quiz_id=quiz.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <select class="form-select" name="type" id="qtype">
+                            <option value="mcq">Multiple Choice</option>
+                            <option value="true_false">True / False</option>
+                            <option value="short_answer">Short Answer</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Question Text</label>
+                        <textarea class="form-control" name="text" rows="2" required></textarea>
+                    </div>
+                    <div id="mcqOptions">
+                        <label class="form-label">Options (MCQ)</label>
+                        <input type="text" class="form-control mb-2" name="options" placeholder="Option 1">
+                        <input type="text" class="form-control mb-2" name="options" placeholder="Option 2">
+                        <input type="text" class="form-control mb-2" name="options" placeholder="Option 3">
+                        <input type="text" class="form-control mb-2" name="options" placeholder="Option 4">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Correct Answer</label>
+                        <input type="text" class="form-control" name="correct_answer" placeholder="Exact option text / True / False">
+                        <div class="form-text">For short answer, this is the model answer (graded manually).</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Marks</label>
+                        <input type="number" class="form-control" name="marks" value="1" min="1">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-plus-lg me-1"></i> Add Question</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('qtype')?.addEventListener('change', function() {
+    document.getElementById('mcqOptions').style.display = this.value === 'mcq' ? 'block' : 'none';
+});
+</script>
+{% endblock %}

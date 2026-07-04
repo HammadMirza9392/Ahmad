@@ -1,0 +1,98 @@
+{% extends "layouts/teacher.html" %}
+{% block title %}Assignments{% endblock %}
+{% block page_title %}Assignments{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4"><i class="bi bi-file-earmark-text me-2"></i>Assignments</h1>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<div class="row">
+    <div class="col-lg-5">
+        <div class="card mb-4">
+            <div class="card-header"><h5 class="card-title mb-0">Post Assignment</h5></div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('teacher.assignments') }}" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">Subject <span class="text-danger">*</span></label>
+                        <select class="form-select" name="subject_id" required>
+                            <option value="">— Select —</option>
+                            {% for s in subjects %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Instructions</label>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Due Date <span class="text-danger">*</span></label>
+                            <input type="datetime-local" class="form-control" name="due_date" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Total Marks</label>
+                            <input type="number" class="form-control" name="total_marks" min="0">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Attachment (optional)</label>
+                        <input type="file" class="form-control" name="file">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-plus-lg me-1"></i> Post Assignment</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card"><div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr><th>Title</th><th>Subject</th><th>Due</th><th>Submissions</th><th></th></tr>
+                </thead>
+                <tbody>
+                    {% for a in assignments %}
+                    <tr>
+                        <td class="fw-semibold">{{ a.title }}</td>
+                        <td>{{ a.subject.name if a.subject else '—' }}</td>
+                        <td>
+                            {{ a.due_date.strftime('%b %d, %Y %H:%M') }}
+                            {% if a.is_past_due %}<span class="badge bg-danger ms-1">Past due</span>{% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('teacher.assignment_submissions', assignment_id=a.id) }}">
+                                {{ submission_counts.get(a.id, 0) }} / {{ enrolled_counts.get(a.subject_id, 0) }}
+                            </a>
+                        </td>
+                        <td class="text-end">
+                            <form action="{{ url_for('teacher.assignment_delete', assignment_id=a.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this assignment?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not assignments %}
+                    <tr><td colspan="5" class="text-center py-4 text-muted">
+                        <i class="bi bi-inbox fs-3 d-block mb-2"></i>No assignments posted yet.
+                    </td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div></div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "layouts/teacher.html" %}
+{% block title %}Quizzes{% endblock %}
+{% block page_title %}Quizzes{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-patch-question me-2"></i>Quizzes</h1>
+    <a href="{{ url_for('teacher.quiz_create') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Create Quiz</a>
+</div>
+
+<div class="card"><div class="card-body p-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light"><tr><th>#</th><th>Title</th><th>Subject</th><th>Status</th><th>Questions</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+                {% for q in quizzes %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td class="fw-semibold">{{ q.title }}</td>
+                    <td>{{ q.subject.name if q.subject else '—' }}</td>
+                    <td>
+                        {% set badge = {'upcoming':'info','active':'success','expired':'secondary'} %}
+                        <span class="badge bg-{{ badge.get(q.status, 'secondary') }}">{{ q.status|capitalize }}</span>
+                    </td>
+                    <td>{{ q.questions|length }}</td>
+                    <td class="text-end">
+                        <a href="{{ url_for('teacher.quiz_edit', quiz_id=q.id) }}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil-square"></i> Edit</a>
+                        <a href="{{ url_for('teacher.quiz_attempts', quiz_id=q.id) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-list-check"></i> Attempts</a>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not quizzes %}
+                <tr><td colspan="6" class="text-center py-4 text-muted"><i class="bi bi-inbox fs-1 d-block mb-2"></i>No quizzes yet.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div></div>
+{% endblock %}

@@ -26,9 +26,14 @@ def programs():
     return APIController.get_programs_for_department()
 
 
-@api_bp.route('/classes')
-def classes():
-    return APIController.get_classes_for_program()
+@api_bp.route('/batches')
+def batches():
+    return APIController.get_batches_for_program()
+
+
+@api_bp.route('/semesters')
+def semesters():
+    return APIController.get_semesters_for_batch()
 
 
 @api_bp.route('/subjects')
@@ -71,7 +76,8 @@ def public_chat():
                 title='Quick Chat',
                 department_id=current_user.department_id,
                 program_id=current_user.program_id,
-                class_id=current_user.class_id,
+                batch_id=current_user.batch_id,
+                semester_id=current_user.semester_id,
             )
             response_text, _ = ContextManager.process_message(
                 user=current_user,

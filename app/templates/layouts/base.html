@@ -6,18 +6,39 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}LMS{% endblock %} | {{ institution.name if institution else 'LMS' }}</title>
 
-    {% if institution and institution.favicon %}
+    {% if theme and theme.favicon_url %}
+    <link rel="icon" href="{{ theme.favicon_url }}">
+    {% elif institution and institution.favicon %}
     <link rel="icon" href="{{ institution.favicon }}" type="image/x-icon">
     {% endif %}
 
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    {% set display_font = theme.font_display if theme and theme.font_display else 'Inter' %}
+    {% set body_font = theme.font_body if theme and theme.font_body else 'Inter' %}
+    <link href="https://fonts.googleapis.com/css2?family={{ display_font|replace(' ', '+') }}:wght@400;500;600;700;800&family={{ body_font|replace(' ', '+') }}:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+
+    {% if theme %}
+    <style>
+        :root {
+            --theme-primary: {{ theme.primary_color }};
+            --theme-secondary: {{ theme.secondary_color }};
+            --theme-accent: {{ theme.accent_color }};
+            --theme-bg: {{ theme.bg_color }};
+            --theme-text: {{ theme.text_color }};
+            --theme-banner-text: {{ theme.banner_text_color or '#ffffff' }};
+            --theme-sidebar-text: {{ theme.sidebar_text_color or '#ffffff' }};
+            --theme-link: {{ theme.link_color or theme.primary_color }};
+            --theme-font-display: '{{ display_font }}', sans-serif;
+            --theme-font-body: '{{ body_font }}', sans-serif;
+        }
+    </style>
+    {% endif %}
 
     {% block head_extra %}{% endblock %}
 </head>

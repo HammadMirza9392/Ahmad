@@ -15,6 +15,10 @@ def login():
     if current_user.is_authenticated:
         if current_user.is_admin():
             return redirect(url_for('admin.dashboard'))
+        if current_user.is_hod():
+            return redirect(url_for('hod.dashboard'))
+        if current_user.is_teacher():
+            return redirect(url_for('teacher.dashboard'))
         return redirect(url_for('student.dashboard'))
 
     if request.method == 'POST':

@@ -1,0 +1,65 @@
+{% extends "layouts/hod.html" %}
+{% block title %}Add Student{% endblock %}
+{% block page_title %}Add Student{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-plus-circle me-2"></i>Add Student</h1>
+    <a href="{{ url_for('hod.students') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back</a>
+</div>
+
+<form method="POST" action="{{ url_for('hod.student_create') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="card"><div class="card-body">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="full_name" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Email <span class="text-danger">*</span></label>
+                <input type="email" class="form-control" name="email" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Roll Number</label>
+                <input type="text" class="form-control" name="roll_number">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Phone</label>
+                <input type="text" class="form-control" name="phone">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Program</label>
+                <select class="form-select" name="program_id">
+                    <option value="">— Select —</option>
+                    {% for p in programs %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Batch</label>
+                <select class="form-select" name="batch_id">
+                    <option value="">— Select —</option>
+                    {% for b in batches %}<option value="{{ b.id }}">{{ b.label }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Semester</label>
+                <select class="form-select" name="semester_id">
+                    <option value="">— Select —</option>
+                    {% for s in semesters %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+                </select>
+                <div class="form-text">Subjects are auto-allocated from the selected semester.</div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Registration Number</label>
+                <input type="text" class="form-control" name="registration_number">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Password</label>
+                <input type="text" class="form-control" name="password" placeholder="Default: Student@123">
+            </div>
+        </div>
+    </div></div>
+    <div class="mt-3"><button type="submit" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Create Student</button></div>
+</form>
+{% endblock %}

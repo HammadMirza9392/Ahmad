@@ -10,7 +10,7 @@
         <div class="card border-0 shadow-sm text-center">
             <div class="card-body p-4">
                 <div class="mx-auto rounded-circle d-flex align-items-center justify-content-center mb-3"
-                     style="width:96px;height:96px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:2.5rem;font-weight:700;">
+                     style="width:96px;height:96px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;font-size:2.5rem;font-weight:700;">
                     {{ current_user.full_name[0]|upper if current_user.full_name else 'S' }}
                 </div>
                 <h4 class="fw-bold mb-1">{{ current_user.full_name }}</h4>
@@ -59,6 +59,10 @@
                         <label class="form-label text-muted small fw-semibold text-uppercase">Roll Number</label>
                         <div class="form-control-plaintext fw-semibold">{{ current_user.roll_number or '-' }}</div>
                     </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small fw-semibold text-uppercase">Registration Number</label>
+                        <div class="form-control-plaintext fw-semibold">{{ current_user.registration_number or '-' }}</div>
+                    </div>
                     <div class="col-12"><hr></div>
                     <div class="col-md-6">
                         <label class="form-label text-muted small fw-semibold text-uppercase">Department</label>
@@ -69,8 +73,12 @@
                         <div class="form-control-plaintext fw-semibold">{{ current_user.program.name if current_user.program else '-' }}</div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label text-muted small fw-semibold text-uppercase">Class / Section</label>
-                        <div class="form-control-plaintext fw-semibold">{{ current_user.class_.name if current_user.class_ else '-' }}</div>
+                        <label class="form-label text-muted small fw-semibold text-uppercase">Batch</label>
+                        <div class="form-control-plaintext fw-semibold">{{ current_user.student_batch.label if current_user.student_batch else '-' }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small fw-semibold text-uppercase">Semester</label>
+                        <div class="form-control-plaintext fw-semibold">{{ current_user.student_semester.name if current_user.student_semester else '-' }}</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label text-muted small fw-semibold text-uppercase">Account Created</label>

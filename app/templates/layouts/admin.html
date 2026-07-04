@@ -7,10 +7,12 @@
 <!-- Sidebar -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-        {% if institution and institution.logo %}
+        {% if theme and theme.logo_url %}
+        <img src="{{ theme.logo_url }}" alt="Logo">
+        {% elif institution and institution.logo %}
         <img src="{{ institution.logo }}" alt="Logo">
         {% else %}
-        <div class="avatar" style="width:38px;height:38px;border-radius:8px;background:linear-gradient(135deg,#667eea,#764ba2);">
+        <div class="avatar" style="width:38px;height:38px;border-radius:8px;background:linear-gradient(135deg,var(--primary),var(--secondary));">
             <i class="bi bi-mortarboard-fill"></i>
         </div>
         {% endif %}
@@ -47,13 +49,23 @@
             </a>
         </div>
         <div class="nav-item">
-            <a href="{{ url_for('admin.classes') }}" class="nav-link {% if 'class' in request.endpoint %}active{% endif %}">
-                <i class="bi bi-people"></i> Classes
+            <a href="{{ url_for('admin.batches') }}" class="nav-link {% if 'batch' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-collection"></i> Batches
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.semesters') }}" class="nav-link {% if 'semester' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-people"></i> Semesters
             </a>
         </div>
         <div class="nav-item">
             <a href="{{ url_for('admin.subjects') }}" class="nav-link {% if 'subject' in request.endpoint %}active{% endif %}">
                 <i class="bi bi-book"></i> Subjects
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.teachers') }}" class="nav-link {% if 'teacher' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-person-workspace"></i> Teachers
             </a>
         </div>
         <div class="nav-item">
@@ -115,6 +127,25 @@
                 <i class="bi bi-graph-up"></i> Analytics
             </a>
         </div>
+
+        <div class="sidebar-section">Administration</div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.users') }}" class="nav-link {% if 'user' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-people"></i> User Roles
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{{ url_for('admin.reports') }}" class="nav-link {% if 'report' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-graph-up-arrow"></i> Reports
+            </a>
+        </div>
+        {% if current_user.is_authenticated and current_user.is_super_admin() %}
+        <div class="nav-item">
+            <a href="{{ url_for('admin.theme') }}" class="nav-link {% if 'theme' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-palette"></i> Theme Portal
+            </a>
+        </div>
+        {% endif %}
 
         <div class="sidebar-section">System</div>
         <div class="nav-item">

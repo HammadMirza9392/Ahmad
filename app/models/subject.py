@@ -1,6 +1,6 @@
 """
 Subject Model
-Academic subjects that belong to departments and are assigned to classes.
+Academic subjects that belong to departments and are assigned to a semester.
 """
 from datetime import datetime
 from app import db
@@ -17,6 +17,10 @@ class Subject(db.Model):
     credit_hours = db.Column(db.Integer)
 
     department_id = db.Column(db.Integer, db.ForeignKey('departments.id'), nullable=False)
+    semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id'), nullable=True)
+    # Single teacher per subject kept intentionally (see migration notes) —
+    # multi-teacher support was explicitly optional in the spec.
+    teacher_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     is_active = db.Column(db.Boolean, default=True)
     sort_order = db.Column(db.Integer, default=0)
@@ -26,7 +30,7 @@ class Subject(db.Model):
 
     # Relationships
     knowledge_entries = db.relationship('KnowledgeBase', backref='subject', lazy='dynamic')
-    class_subjects = db.relationship('ClassSubject', backref='subject', lazy=True)
+    teacher = db.relationship('User', foreign_keys=[teacher_id], backref='taught_subjects')
 
     def __repr__(self):
         return f'<Subject {self.name}>'

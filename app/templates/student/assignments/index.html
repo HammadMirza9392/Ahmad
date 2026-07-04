@@ -7,99 +7,105 @@
 <div class="d-flex align-items-center justify-content-between mb-4">
     <div>
         <h4 class="fw-bold mb-1">Assignments</h4>
-        <p class="text-muted mb-0">View and download your assignments</p>
+        <p class="text-muted mb-0">Assignments posted by your teachers, with due dates and submissions</p>
     </div>
-    <span class="badge bg-primary fs-6 px-3 py-2">{{ pagination.total }} Assignment{{ 's' if pagination.total != 1 else '' }}</span>
+    <span class="badge bg-primary fs-6 px-3 py-2">{{ rows|length }} Assignment{{ 's' if rows|length != 1 else '' }}</span>
 </div>
 
-{% if pagination.items %}
-<div class="card border-0 shadow-sm">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead>
-                <tr class="bg-light">
-                    <th class="border-0 ps-4 py-3">#</th>
-                    <th class="border-0 py-3">Title</th>
-                    <th class="border-0 py-3">File</th>
-                    <th class="border-0 py-3">Date</th>
-                    <th class="border-0 py-3 text-center">Downloads</th>
-                    <th class="border-0 pe-4 py-3 text-end">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in pagination.items %}
-                <tr>
-                    <td class="ps-4">
-                        <span class="text-muted">{{ (pagination.page - 1) * pagination.per_page + loop.index }}</span>
-                    </td>
-                    <td>
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
-                                 style="width:40px;height:40px;background:rgba(220,53,69,.1);color:#dc3545;font-size:1.1rem;">
-                                <i class="bi bi-clipboard-check"></i>
-                            </div>
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+{% if rows %}
+<div class="row g-3">
+    {% for assignment, submission in rows %}
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                         style="width:44px;height:44px;background:rgba(220,53,69,.1);color:#dc3545;font-size:1.2rem;">
+                        <i class="bi bi-clipboard-check"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                             <div>
-                                <div class="fw-semibold">{{ item.title }}</div>
-                                {% if item.description %}
-                                <small class="text-muted">{{ item.description|truncate(60) }}</small>
+                                <div class="fw-semibold">{{ assignment.title }}</div>
+                                <small class="text-muted">{{ assignment.subject.name if assignment.subject else '' }}
+                                    {% if assignment.teacher %} · {{ assignment.teacher.full_name }}{% endif %}
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge {% if assignment.is_past_due %}bg-danger{% else %}bg-success{% endif %}">
+                                    Due {{ assignment.due_date.strftime('%b %d, %Y %H:%M') }}
+                                </span>
+                                {% if assignment.total_marks %}
+                                <div class="small text-muted mt-1">{{ assignment.total_marks }} marks</div>
                                 {% endif %}
                             </div>
                         </div>
-                    </td>
-                    <td><small class="text-muted">{{ item.original_name }}</small></td>
-                    <td>
-                        <small class="text-muted">
-                            {{ item.created_at.strftime('%b %d, %Y') if item.created_at else '-' }}
-                        </small>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge bg-light text-dark">{{ item.download_count or 0 }}</span>
-                    </td>
-                    <td class="pe-4 text-end">
-                        <a href="{{ url_for('student.download_file', dl_id=item.id) }}" class="btn btn-sm btn-primary">
-                            <i class="bi bi-download me-1"></i>Download
+                        {% if assignment.description %}
+                        <p class="small mt-2 mb-2">{{ assignment.description }}</p>
+                        {% endif %}
+                        {% if assignment.file_url %}
+                        <a href="{{ assignment.file_url }}" target="_blank" class="small">
+                            <i class="bi bi-paperclip me-1"></i>Assignment attachment
                         </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        {% endif %}
+
+                        <hr class="my-3">
+
+                        {% if submission %}
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div class="small">
+                                <span class="badge bg-info text-dark">Submitted</span>
+                                {{ submission.submitted_at.strftime('%b %d, %Y %H:%M') }}
+                                {% if submission.is_late %}<span class="badge bg-warning text-dark ms-1">Late</span>{% endif %}
+                                <a href="{{ submission.file_url }}" target="_blank" class="ms-2"><i class="bi bi-box-arrow-up-right"></i> View your file</a>
+                            </div>
+                            {% if submission.is_graded %}
+                            <div class="small">
+                                <span class="badge bg-success">Grade: {{ submission.marks_awarded }}{% if assignment.total_marks %}/{{ assignment.total_marks }}{% endif %}</span>
+                                {% if submission.feedback %}<span class="text-muted ms-1">{{ submission.feedback }}</span>{% endif %}
+                            </div>
+                            {% else %}
+                            <span class="badge bg-secondary">Awaiting grade</span>
+                            {% endif %}
+                        </div>
+                        <form method="POST" action="{{ url_for('student.assignment_submit', assignment_id=assignment.id) }}" enctype="multipart/form-data" class="d-flex gap-2 mt-2">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="file" name="file" class="form-control form-control-sm" required>
+                            <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">Resubmit</button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('student.assignment_submit', assignment_id=assignment.id) }}" enctype="multipart/form-data" class="d-flex gap-2">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="file" name="file" class="form-control form-control-sm" required>
+                            <button type="submit" class="btn btn-sm btn-primary text-nowrap">
+                                <i class="bi bi-upload me-1"></i>Submit
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+    {% endfor %}
 </div>
-
-<!-- Pagination -->
-{% if pagination.pages > 1 %}
-<nav class="mt-4 d-flex justify-content-center">
-    <ul class="pagination">
-        <li class="page-item {{ 'disabled' if not pagination.has_prev }}">
-            <a class="page-link" href="{{ url_for('student.assignments', page=pagination.prev_num) }}">
-                <i class="bi bi-chevron-left"></i>
-            </a>
-        </li>
-        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-            {% if p %}
-            <li class="page-item {{ 'active' if p == pagination.page }}">
-                <a class="page-link" href="{{ url_for('student.assignments', page=p) }}">{{ p }}</a>
-            </li>
-            {% else %}
-            <li class="page-item disabled"><span class="page-link">...</span></li>
-            {% endif %}
-        {% endfor %}
-        <li class="page-item {{ 'disabled' if not pagination.has_next }}">
-            <a class="page-link" href="{{ url_for('student.assignments', page=pagination.next_num) }}">
-                <i class="bi bi-chevron-right"></i>
-            </a>
-        </li>
-    </ul>
-</nav>
-{% endif %}
-
 {% else %}
 <div class="card border-0 shadow-sm">
     <div class="card-body text-center py-5">
         <i class="bi bi-clipboard-check" style="font-size:3rem;opacity:.2;"></i>
         <h5 class="mt-3 text-muted">No Assignments Yet</h5>
-        <p class="text-muted mb-0">Assignments will appear here once they are posted by your teachers.</p>
+        <p class="text-muted mb-0">Assignments will appear here once your teachers post them for your enrolled subjects.</p>
     </div>
 </div>
 {% endif %}

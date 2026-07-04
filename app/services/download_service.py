@@ -25,12 +25,16 @@ class DownloadService:
 
     @staticmethod
     def get_all(page=1, per_page=20, category=None, department_id=None,
-                subject_id=None, search=None):
+                batch_id=None, semester_id=None, subject_id=None, search=None):
         q = Download.query.filter_by(is_active=True).order_by(desc(Download.created_at))
         if category:
             q = q.filter_by(category=category)
         if department_id:
             q = q.filter_by(department_id=department_id)
+        if batch_id:
+            q = q.filter_by(batch_id=batch_id)
+        if semester_id:
+            q = q.filter_by(semester_id=semester_id)
         if subject_id:
             q = q.filter_by(subject_id=subject_id)
         if search:
@@ -61,7 +65,8 @@ class DownloadService:
             file_size=file_size,
             department_id=data.get('department_id'),
             program_id=data.get('program_id'),
-            class_id=data.get('class_id'),
+            batch_id=data.get('batch_id'),
+            semester_id=data.get('semester_id'),
             subject_id=data.get('subject_id'),
             sort_order=data.get('sort_order', 0),
             uploaded_by=user_id,
@@ -73,7 +78,7 @@ class DownloadService:
     @staticmethod
     def update(dl, data):
         for field in ['title', 'description', 'category', 'department_id', 'program_id',
-                       'class_id', 'subject_id', 'sort_order', 'is_active']:
+                       'batch_id', 'semester_id', 'subject_id', 'sort_order', 'is_active']:
             if field in data:
                 setattr(dl, field, data[field])
         db.session.commit()

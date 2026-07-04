@@ -14,6 +14,22 @@ from app.services.analytics_service import AnalyticsService
 logger = logging.getLogger(__name__)
 
 
+def _get_student_assignments(user_id):
+    """Fetch upcoming/recent assignments across a student's enrolled subjects,
+    for injection into the AI system prompt. Best-effort — never raises."""
+    try:
+        from app.services.allocation_service import AllocationService
+        from app.models.assignment import Assignment
+        subjects = AllocationService.get_enrolled_subjects(user_id)
+        subject_ids = [s.id for s in subjects]
+        if not subject_ids:
+            return []
+        return (Assignment.query.filter(Assignment.subject_id.in_(subject_ids))
+                .order_by(Assignment.due_date.asc()).limit(20).all())
+    except Exception:
+        return []
+
+
 class ContextManager:
 
     @staticmethod
@@ -26,9 +42,11 @@ class ContextManager:
         knowledge_context, resource_files = KnowledgeService.get_context_for_student(
             department_id=user.department_id,
             program_id=user.program_id,
-            class_id=user.class_id,
+            batch_id=user.batch_id,
+            semester_id=user.semester_id,
             subject_id=subject_id,
         )
+        assignments = _get_student_assignments(user.id)
 
         # 2. Get AI provider default prompt
         provider_instance = get_provider()
@@ -42,6 +60,7 @@ class ContextManager:
             knowledge_context=knowledge_context,
             resource_files=resource_files,
             custom_prompt=custom_prompt,
+            assignments=assignments,
         )
 
         # 4. Save user message
@@ -107,14 +126,17 @@ class ContextManager:
         user_id = user.id
         dept_id = user.department_id
         prog_id = user.program_id
-        class_id = user.class_id
+        batch_id = user.batch_id
+        semester_id = user.semester_id
 
         knowledge_context, resource_files = KnowledgeService.get_context_for_student(
             department_id=dept_id,
             program_id=prog_id,
-            class_id=class_id,
+            batch_id=batch_id,
+            semester_id=semester_id,
             subject_id=subject_id,
         )
+        assignments = _get_student_assignments(user_id)
 
         provider_instance = get_provider()
         from app.models.ai_settings import AIProvider
@@ -128,6 +150,7 @@ class ContextManager:
             knowledge_context=knowledge_context,
             resource_files=resource_files,
             custom_prompt=custom_prompt,
+            assignments=assignments,
         )
 
         ChatService.add_message(

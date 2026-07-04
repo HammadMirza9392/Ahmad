@@ -1,0 +1,44 @@
+{% extends "layouts/student.html" %}
+{% block title %}Quiz Attempt{% endblock %}
+{% block page_title %}{{ quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-pencil-square me-2"></i>{{ quiz.title }}</h1>
+    <span class="text-muted">{{ quiz.duration_minutes }} min · {{ quiz.total_marks }} marks</span>
+</div>
+
+<form method="POST" action="{{ url_for('student.quiz_attempt', attempt_id=attempt.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% for question in quiz.questions %}
+    <div class="card mb-3"><div class="card-body">
+        <div class="fw-semibold mb-3">{{ loop.index }}. {{ question.text }} <span class="text-muted small">({{ question.marks }} mark{{ 's' if question.marks != 1 else '' }})</span></div>
+        {% if question.type == 'mcq' %}
+            {% for opt in question.options() %}
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="q_{{ question.id }}" id="q{{ question.id }}o{{ loop.index }}" value="{{ opt }}">
+                <label class="form-check-label" for="q{{ question.id }}o{{ loop.index }}">{{ opt }}</label>
+            </div>
+            {% endfor %}
+        {% elif question.type == 'true_false' %}
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="q_{{ question.id }}" id="q{{ question.id }}t" value="True">
+                <label class="form-check-label" for="q{{ question.id }}t">True</label>
+            </div>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="q_{{ question.id }}" id="q{{ question.id }}f" value="False">
+                <label class="form-check-label" for="q{{ question.id }}f">False</label>
+            </div>
+        {% else %}
+            <textarea class="form-control" name="q_{{ question.id }}" rows="3" placeholder="Your answer..."></textarea>
+        {% endif %}
+    </div></div>
+    {% endfor %}
+
+    {% if not quiz.questions %}
+    <div class="alert alert-warning">This quiz has no questions yet.</div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary" onclick="return confirm('Submit your answers?');"><i class="bi bi-send me-1"></i> Submit Quiz</button>
+</form>
+{% endblock %}

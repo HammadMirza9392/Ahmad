@@ -1,0 +1,50 @@
+{% extends "layouts/teacher.html" %}
+{% block title %}Announcements{% endblock %}
+{% block page_title %}Announcements{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4"><i class="bi bi-megaphone me-2"></i>Announcements</h1>
+
+<div class="row">
+    <div class="col-lg-5">
+        <div class="card mb-4">
+            <div class="card-header"><h5 class="card-title mb-0">Post Announcement</h5></div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('teacher.announcements') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">Subject <span class="text-danger">*</span></label>
+                        <select class="form-select" name="subject_id" required>
+                            <option value="">— Select —</option>
+                            {% for s in subjects %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Message</label>
+                        <textarea class="form-control" name="body" rows="4"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-send me-1"></i> Post</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        {% for a in announcements %}
+        <div class="card mb-3"><div class="card-body">
+            <div class="d-flex justify-content-between">
+                <h6 class="fw-bold mb-1">{{ a.title }}</h6>
+                <small class="text-muted">{{ a.posted_at.strftime('%Y-%m-%d') }}</small>
+            </div>
+            <p class="mb-0 text-muted">{{ a.body }}</p>
+        </div></div>
+        {% endfor %}
+        {% if not announcements %}
+        <div class="card"><div class="card-body text-center py-4 text-muted">No announcements yet.</div></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

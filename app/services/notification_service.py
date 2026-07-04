@@ -20,8 +20,8 @@ class NotificationService:
             notification_type=data['notification_type'],
             target_type=data.get('target_type', 'all'),
             department_id=data.get('department_id'),
-            class_id=data.get('class_id'),
-            semester=data.get('semester'),
+            batch_id=data.get('batch_id'),
+            semester_id=data.get('semester_id'),
             priority=data.get('priority', 'normal'),
             created_by=created_by,
             expires_at=data.get('expires_at'),
@@ -39,10 +39,10 @@ class NotificationService:
         q = User.query.filter_by(role='student', is_active=True)
         if notif.target_type == 'department' and notif.department_id:
             q = q.filter_by(department_id=notif.department_id)
-        elif notif.target_type == 'class' and notif.class_id:
-            q = q.filter_by(class_id=notif.class_id)
-        elif notif.target_type == 'semester' and notif.semester:
-            q = q.filter_by(semester=notif.semester)
+        elif notif.target_type == 'batch' and notif.batch_id:
+            q = q.filter_by(batch_id=notif.batch_id)
+        elif notif.target_type == 'semester' and notif.semester_id:
+            q = q.filter_by(semester_id=notif.semester_id)
 
         students = q.all()
         for s in students:
@@ -63,7 +63,7 @@ class NotificationService:
     @staticmethod
     def update(notif, data):
         for field in ['title', 'content', 'notification_type', 'target_type',
-                       'department_id', 'class_id', 'semester', 'priority', 'is_active', 'expires_at']:
+                       'department_id', 'batch_id', 'semester_id', 'priority', 'is_active', 'expires_at']:
             if field in data:
                 setattr(notif, field, data[field])
         db.session.commit()

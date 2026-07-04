@@ -1,0 +1,54 @@
+{% extends "layouts/hod.html" %}
+{% block title %}Add Subject{% endblock %}
+{% block page_title %}Add Subject{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-plus-circle me-2"></i>Add Subject</h1>
+    <a href="{{ url_for('hod.subjects') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back</a>
+</div>
+
+<form method="POST" action="{{ url_for('hod.subject_create') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="card"><div class="card-body">
+        <div class="row">
+            <div class="col-md-8 mb-3">
+                <label class="form-label">Subject Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="name" required>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Code</label>
+                <input type="text" class="form-control" name="code" placeholder="CS-101">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Credit Hours</label>
+                <input type="number" class="form-control" name="credit_hours" min="0">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Semester</label>
+                <select class="form-select" name="semester_id">
+                    <option value="">— Unassigned —</option>
+                    {% for s in semesters %}
+                    <option value="{{ s.id }}">{{ s.batch.label if s.batch else '' }} — {{ s.name }}</option>
+                    {% endfor %}
+                </select>
+                <div class="form-text">Which batch + semester this subject belongs to.</div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Teacher</label>
+                <select class="form-select" name="teacher_id">
+                    <option value="">— Unassigned —</option>
+                    {% for t in teachers %}
+                    <option value="{{ t.id }}">{{ t.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 mb-3">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" name="description" rows="3"></textarea>
+            </div>
+        </div>
+    </div></div>
+    <div class="mt-3"><button type="submit" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Create Subject</button></div>
+</form>
+{% endblock %}

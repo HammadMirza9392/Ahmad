@@ -1,0 +1,69 @@
+{% extends "layouts/teacher.html" %}
+{% block title %}Study Materials{% endblock %}
+{% block page_title %}Study Materials{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4"><i class="bi bi-journal-text me-2"></i>Study Materials</h1>
+
+<div class="row">
+    <div class="col-lg-5">
+        <div class="card mb-4">
+            <div class="card-header"><h5 class="card-title mb-0">Add Material</h5></div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('teacher.materials') }}" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">Subject <span class="text-danger">*</span></label>
+                        <select class="form-select" name="subject_id" required>
+                            <option value="">— Select —</option>
+                            {% for s in subjects %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <select class="form-select" name="material_type">
+                            <option value="notes">Notes</option>
+                            <option value="slides">Slides</option>
+                            <option value="reference">Reference</option>
+                            <option value="link">Link</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">File</label>
+                        <input type="file" class="form-control" name="file">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Or Link URL</label>
+                        <input type="text" class="form-control" name="link" placeholder="https://...">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-plus-lg me-1"></i> Add Material</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card"><div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light"><tr><th>Title</th><th>Subject</th><th>Type</th><th></th></tr></thead>
+                <tbody>
+                    {% for m in materials %}
+                    <tr>
+                        <td class="fw-semibold">{{ m.title }}</td>
+                        <td>{{ m.subject.name if m.subject else '—' }}</td>
+                        <td><span class="badge bg-secondary">{{ m.material_type }}</span></td>
+                        <td>{% if m.file_url %}<a href="{{ m.file_url }}" target="_blank"><i class="bi bi-box-arrow-up-right"></i></a>{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not materials %}
+                    <tr><td colspan="4" class="text-center py-4 text-muted">No materials yet.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div></div>
+    </div>
+</div>
+{% endblock %}

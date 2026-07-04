@@ -16,7 +16,8 @@ class KnowledgeBase(db.Model):
     # Hierarchical categorization
     department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
     program_id = db.Column(db.Integer, db.ForeignKey('programs.id'))
-    class_id = db.Column(db.Integer, db.ForeignKey('classes.id'))
+    batch_id = db.Column(db.Integer, db.ForeignKey('batches.id'))
+    semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id'))
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'))
     chapter = db.Column(db.String(255))
     topic = db.Column(db.String(255))
@@ -38,7 +39,8 @@ class KnowledgeBase(db.Model):
     versions = db.relationship('KnowledgeVersion', backref='knowledge', lazy='dynamic', cascade='all, delete-orphan')
     department = db.relationship('Department', backref='knowledge_entries')
     program = db.relationship('Program', backref='knowledge_entries')
-    class_ref = db.relationship('Class', backref='knowledge_entries')
+    batch = db.relationship('Batch', backref='knowledge_entries')
+    semester = db.relationship('Semester', backref='knowledge_entries')
     author = db.relationship('User', backref='knowledge_entries')
 
     def __repr__(self):

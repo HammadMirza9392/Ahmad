@@ -24,7 +24,8 @@ class Download(db.Model):
     # Categorization
     department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
     program_id = db.Column(db.Integer, db.ForeignKey('programs.id'))
-    class_id = db.Column(db.Integer, db.ForeignKey('classes.id'))
+    batch_id = db.Column(db.Integer, db.ForeignKey('batches.id'))
+    semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id'))
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'))
 
     download_count = db.Column(db.Integer, default=0)
@@ -38,7 +39,8 @@ class Download(db.Model):
     # Relationships
     department = db.relationship('Department', backref='downloads')
     program = db.relationship('Program', backref='downloads')
-    class_ref = db.relationship('Class', backref='downloads')
+    batch = db.relationship('Batch', backref='downloads')
+    semester = db.relationship('Semester', backref='downloads')
     subject = db.relationship('Subject', backref='downloads')
     uploader = db.relationship('User', backref='uploads')
 

@@ -35,3 +35,23 @@ def student_required(f):
             abort(403)
         return f(*args, **kwargs)
     return decorated
+
+
+def hod_required(f):
+    """Restrict access to HOD users (or admins acting on their behalf)."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not current_user.is_authenticated or not (current_user.is_hod() or current_user.is_admin()):
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated
+
+
+def teacher_required(f):
+    """Restrict access to teacher users."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not current_user.is_authenticated or not (current_user.is_teacher() or current_user.is_admin()):
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated

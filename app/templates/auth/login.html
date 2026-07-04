@@ -5,11 +5,13 @@
 {% block body %}
 <div class="login-wrapper">
     <div class="login-card">
-        {% if institution and institution.logo %}
+        {% if theme and theme.logo_url %}
+        <img src="{{ theme.logo_url }}" alt="Logo" class="logo">
+        {% elif institution and institution.logo %}
         <img src="{{ institution.logo }}" alt="Logo" class="logo">
         {% else %}
         <div class="text-center mb-3">
-            <div class="avatar avatar-lg mx-auto" style="width:70px;height:70px;border-radius:16px;font-size:2rem;background:linear-gradient(135deg,#667eea,#764ba2);">
+            <div class="avatar avatar-lg mx-auto" style="width:70px;height:70px;border-radius:16px;font-size:2rem;background:linear-gradient(135deg,var(--primary),var(--secondary));">
                 <i class="bi bi-mortarboard-fill"></i>
             </div>
         </div>

@@ -98,7 +98,7 @@ function renderSearchResults(data) {
     searchResults.style.display = 'block';
 }
 
-// ── Dynamic Dependent Dropdowns (Department → Program → Class) ──
+// ── Dynamic Dependent Dropdowns (Department → Program → Batch → Semester) ──
 function loadPrograms(departmentId, targetSelect, callback) {
     if (!departmentId) {
         targetSelect.innerHTML = '<option value="">-- Select Program --</option>';
@@ -117,18 +117,36 @@ function loadPrograms(departmentId, targetSelect, callback) {
         });
 }
 
-function loadClasses(programId, targetSelect, callback) {
+function loadBatches(programId, targetSelect, callback) {
     if (!programId) {
-        targetSelect.innerHTML = '<option value="">-- Select Class --</option>';
+        targetSelect.innerHTML = '<option value="">-- Select Batch --</option>';
         if (callback) callback();
         return;
     }
-    fetch(`/api/classes?program_id=${programId}`)
+    fetch(`/api/batches?program_id=${programId}`)
         .then(r => r.json())
         .then(data => {
-            let html = '<option value="">-- Select Class --</option>';
-            data.forEach(c => {
-                html += `<option value="${c.id}">${c.name}</option>`;
+            let html = '<option value="">-- Select Batch --</option>';
+            data.forEach(b => {
+                html += `<option value="${b.id}">${b.name}</option>`;
+            });
+            targetSelect.innerHTML = html;
+            if (callback) callback();
+        });
+}
+
+function loadSemesters(batchId, targetSelect, callback) {
+    if (!batchId) {
+        targetSelect.innerHTML = '<option value="">-- Select Semester --</option>';
+        if (callback) callback();
+        return;
+    }
+    fetch(`/api/semesters?batch_id=${batchId}`)
+        .then(r => r.json())
+        .then(data => {
+            let html = '<option value="">-- Select Semester --</option>';
+            data.forEach(s => {
+                html += `<option value="${s.id}">${s.name}</option>`;
             });
             targetSelect.innerHTML = html;
             if (callback) callback();

@@ -22,6 +22,9 @@ class Department(db.Model):
     hod_email = db.Column(db.String(255))
     hod_phone = db.Column(db.String(50))
 
+    # Real access-control link to the HOD user account (distinct from public display fields above)
+    hod_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+
     # Display
     sort_order = db.Column(db.Integer, default=0)
     is_active = db.Column(db.Boolean, default=True)
@@ -32,6 +35,7 @@ class Department(db.Model):
     # Relationships
     programs = db.relationship('Program', backref='department', lazy=True, cascade='all, delete-orphan')
     subjects = db.relationship('Subject', backref='department', lazy=True)
+    hod = db.relationship('User', foreign_keys=[hod_user_id], backref='headed_department')
 
     def __repr__(self):
         return f'<Department {self.name}>'

@@ -65,6 +65,10 @@
                             <label for="roll_number" class="form-label">Roll Number</label>
                             <input type="text" class="form-control" id="roll_number" name="roll_number" placeholder="e.g. FA21-BCS-001">
                         </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="registration_number" class="form-label">Registration Number</label>
+                            <input type="text" class="form-control" id="registration_number" name="registration_number" placeholder="e.g. 2021-CS-101">
+                        </div>
                     </div>
 
                     <hr>
@@ -93,22 +97,36 @@
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="class_id" class="form-label">Class</label>
-                            <select class="form-select" id="class_id" name="class_id">
-                                <option value="" selected>-- Select Class (Optional) --</option>
+                            <label for="batch_id" class="form-label">Batch</label>
+                            <select class="form-select" id="batch_id" name="batch_id">
+                                <option value="" selected>-- Select Batch (Optional) --</option>
                             </select>
-                            <div class="form-text">Classes will load based on selected program.</div>
+                            <div class="form-text">Batches will load based on selected program.</div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="semester" class="form-label">Semester</label>
-                            <input type="number" class="form-control" id="semester" name="semester" min="1" max="12" placeholder="e.g. 1">
+                            <label for="semester_id" class="form-label">Semester</label>
+                            <select class="form-select" id="semester_id" name="semester_id">
+                                <option value="" selected>-- Select Semester (Optional) --</option>
+                            </select>
+                            <div class="form-text">Subjects are auto-allocated from the selected semester.</div>
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" checked>
-                            <label class="form-check-label" for="is_active">Active</label>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="enrollment_status" class="form-label">Enrollment Status</label>
+                            <select class="form-select" id="enrollment_status" name="enrollment_status">
+                                <option value="active" selected>Active</option>
+                                <option value="graduated">Graduated</option>
+                                <option value="suspended">Suspended</option>
+                                <option value="dropped">Dropped</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3 d-flex align-items-end">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" checked>
+                                <label class="form-check-label" for="is_active">Active</label>
+                            </div>
                         </div>
                     </div>
 
@@ -124,4 +142,23 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('department_id').addEventListener('change', function () {
+    loadPrograms(this.value, document.getElementById('program_id'), function () {
+        document.getElementById('batch_id').innerHTML = '<option value="">-- Select Batch (Optional) --</option>';
+        document.getElementById('semester_id').innerHTML = '<option value="">-- Select Semester (Optional) --</option>';
+    });
+});
+document.getElementById('program_id').addEventListener('change', function () {
+    loadBatches(this.value, document.getElementById('batch_id'), function () {
+        document.getElementById('semester_id').innerHTML = '<option value="">-- Select Semester (Optional) --</option>';
+    });
+});
+document.getElementById('batch_id').addEventListener('change', function () {
+    loadSemesters(this.value, document.getElementById('semester_id'));
+});
+</script>
 {% endblock %}

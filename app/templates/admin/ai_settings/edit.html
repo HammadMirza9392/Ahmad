@@ -199,7 +199,7 @@
                     {% elif provider.provider_type == 'openrouter' %}background:linear-gradient(135deg,#6366f1,#8b5cf6);
                     {% elif provider.provider_type == 'huggingface' %}background:linear-gradient(135deg,#ff9d00,#ffcd00);color:#333;
                     {% elif provider.provider_type == 'deepseek' %}background:linear-gradient(135deg,#0066ff,#00ccff);
-                    {% else %}background:linear-gradient(135deg,#667eea,#764ba2);{% endif %}">
+                    {% else %}background:linear-gradient(135deg,var(--primary),var(--secondary));{% endif %}">
                     <i class="bi bi-robot"></i>
                 </div>
                 <h5 class="fw-bold">{{ provider.name }}</h5>

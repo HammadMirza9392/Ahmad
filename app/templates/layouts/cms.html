@@ -5,7 +5,9 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
     <div class="container">
         <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('cms.home') }}">
-            {% if institution and institution.logo %}
+            {% if theme and theme.logo_url %}
+            <img src="{{ theme.logo_url }}" alt="Logo" style="height:40px;border-radius:8px;">
+            {% elif institution and institution.logo %}
             <img src="{{ institution.logo }}" alt="Logo" style="height:40px;border-radius:8px;">
             {% endif %}
             <span class="fw-bold" style="font-size:1rem;">{{ institution.name if institution else 'LMS' }}</span>
@@ -111,7 +113,7 @@
 <!-- AI Chatbot Widget -->
 <div class="chatbot-fab" id="chatbotFab">
     <!-- Pulse ring -->
-    <div style="position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(26,86,219,0.3);animation:chatPulse 2s infinite;"></div>
+    <div style="position:absolute;inset:-4px;border-radius:50%;border:2px solid color-mix(in srgb, var(--primary) 30%, transparent);animation:chatPulse 2s infinite;"></div>
     <button class="fab-btn" id="chatbotToggle" title="Chat with AI Assistant">
         <i class="bi bi-chat-dots-fill" id="fabIconOpen"></i>
         <i class="bi bi-x-lg d-none" id="fabIconClose"></i>
@@ -143,7 +145,7 @@
     <div class="chatbot-messages" id="chatbotMessages">
         <!-- Welcome -->
         <div class="cb-welcome">
-            <div style="width:50px;height:50px;background:linear-gradient(135deg,#1a56db,#7c3aed);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+            <div style="width:50px;height:50px;background:linear-gradient(135deg,var(--primary),var(--secondary));border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
                 <i class="bi bi-robot text-white" style="font-size:1.3rem;"></i>
             </div>
             <h6 class="fw-bold mb-1">Hi there! 👋</h6>
@@ -202,9 +204,9 @@
 .chatbot-fab { position:fixed;bottom:24px;right:24px;z-index:9999; }
 .chatbot-fab .fab-btn {
     width:56px;height:56px;border-radius:50%;
-    background:linear-gradient(135deg,#1a56db,#7c3aed);
+    background:linear-gradient(135deg,var(--primary),var(--secondary));
     color:#fff;border:none;font-size:1.4rem;cursor:pointer;
-    box-shadow:0 4px 20px rgba(26,86,219,0.4);
+    box-shadow:0 4px 20px color-mix(in srgb, var(--primary) 40%, transparent);
     display:flex;align-items:center;justify-content:center;
     transition:all 0.3s ease;position:relative;z-index:2;
 }
@@ -220,7 +222,7 @@
 .chatbot-window.open { display:flex;animation:fadeIn 0.3s ease; }
 
 .chatbot-header {
-    background:linear-gradient(135deg,#1a56db,#7c3aed);
+    background:linear-gradient(135deg,var(--primary),var(--secondary));
     color:#fff;padding:14px 16px;
     display:flex;align-items:center;justify-content:space-between;
     border-bottom:none;
@@ -247,7 +249,7 @@
     padding:6px 14px;font-size:0.75rem;color:#475569;cursor:pointer;
     transition:all 0.2s;
 }
-.cb-suggestion:hover { background:#1a56db;color:#fff;border-color:#1a56db; }
+.cb-suggestion:hover { background:var(--primary);color:#fff;border-color:var(--primary); }
 
 /* Messages */
 .chatbot-msg { margin-bottom:12px;display:flex;align-items:flex-end;gap:6px; }
@@ -256,13 +258,13 @@
     width:26px;height:26px;border-radius:50%;flex-shrink:0;
     display:flex;align-items:center;justify-content:center;font-size:0.65rem;
 }
-.chatbot-msg.assistant .cb-avatar { background:linear-gradient(135deg,#1a56db,#7c3aed);color:#fff; }
+.chatbot-msg.assistant .cb-avatar { background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff; }
 .chatbot-msg .bubble {
     max-width:80%;padding:10px 14px;font-size:0.82rem;line-height:1.55;
     word-wrap:break-word;white-space:pre-wrap;
 }
 .chatbot-msg.user .bubble {
-    background:linear-gradient(135deg,#1a56db,#2563eb);color:#fff;
+    background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;
     border-radius:16px 16px 4px 16px;
 }
 .chatbot-msg.assistant .bubble {
@@ -296,11 +298,11 @@
     display:flex;align-items:center;justify-content:center;
     transition:all 0.2s;font-size:0.95rem;flex-shrink:0;
 }
-.cb-mic-btn:hover { color:#1a56db; }
+.cb-mic-btn:hover { color:var(--primary); }
 .cb-mic-btn.recording { color:#dc2626;animation:micPulse 1.5s infinite;background:rgba(220,38,38,0.08); }
 .cb-send-btn {
     width:34px;height:34px;border-radius:50%;border:none;
-    background:linear-gradient(135deg,#1a56db,#7c3aed);color:#fff;
+    background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;
     cursor:pointer;display:flex;align-items:center;justify-content:center;
     transition:all 0.2s;font-size:0.85rem;flex-shrink:0;
 }
@@ -320,7 +322,7 @@
     display:flex;justify-content:space-between;align-items:center;
     padding:6px 4px 0;font-size:0.65rem;color:#94a3b8;
 }
-.cb-footer a { color:#1a56db;text-decoration:none;font-weight:600; }
+.cb-footer a { color:var(--primary);text-decoration:none;font-weight:600; }
 
 @media (max-width:480px) {
     .chatbot-window { width:calc(100vw - 16px);right:8px;bottom:80px;height:70vh; }
@@ -421,7 +423,7 @@ function formatResponse(text) {
 function clearChat() {
     const msgArea = document.getElementById('chatbotMessages');
     msgArea.innerHTML = `<div class="cb-welcome">
-        <div style="width:50px;height:50px;background:linear-gradient(135deg,#1a56db,#7c3aed);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+        <div style="width:50px;height:50px;background:linear-gradient(135deg,var(--primary),var(--secondary));border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
             <i class="bi bi-robot text-white" style="font-size:1.3rem;"></i>
         </div>
         <h6 class="fw-bold mb-1">Chat cleared</h6>

@@ -211,6 +211,10 @@ new Chart(document.getElementById('dailyChatsChart'), {
     }
 });
 
+// Resolve the active theme colors so charts follow the Theme Portal too.
+const themeColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#1a56db';
+const themeColorAlt = getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim() || '#7c3aed';
+
 // AI Usage Doughnut
 const aiData = {{ ai_usage | tojson }};
 if (aiData.length > 0) {
@@ -220,7 +224,7 @@ if (aiData.length > 0) {
             labels: aiData.map(d => d.provider),
             datasets: [{
                 data: aiData.map(d => d.count),
-                backgroundColor: ['#667eea', '#764ba2', '#11998e', '#f5576c', '#4facfe', '#43e97b'],
+                backgroundColor: [themeColor, themeColorAlt, '#11998e', '#f5576c', '#4facfe', '#43e97b'],
             }]
         },
         options: { responsive: true }
@@ -258,11 +262,11 @@ new Chart(document.getElementById('monthlyChatsChart'), {
         datasets: [{
             label: 'Chats',
             data: monthlyData.map(d => d.count),
-            borderColor: '#764ba2',
+            borderColor: themeColorAlt,
             backgroundColor: 'rgba(124, 58, 237, 0.1)',
             fill: true,
             tension: 0.4,
-            pointBackgroundColor: '#764ba2',
+            pointBackgroundColor: themeColorAlt,
         }]
     },
     options: {

@@ -5,7 +5,9 @@ All admin panel routes — dashboard, CRUD, settings.
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 
-from app.utils.decorators import admin_required
+from app import db
+from app.models.subject import Subject
+from app.utils.decorators import admin_required, super_admin_required
 from app.controllers.admin_controller import AdminController
 from app.services.department_service import DepartmentService
 from app.services.student_service import StudentService
@@ -211,54 +213,104 @@ def program_delete(prog_id):
     return redirect(url_for('admin.programs'))
 
 
-# ───────────── CLASSES ─────────────
+# ───────────── BATCHES ─────────────
 
-@admin_bp.route('/classes')
+@admin_bp.route('/batches')
 @login_required
 @admin_required
-def classes():
-    cls_list = DepartmentService.get_classes()
+def batches():
+    batch_list = DepartmentService.get_batches()
     progs = DepartmentService.get_programs()
-    return render_template('admin/classes/index.html', classes=cls_list, programs=progs)
+    return render_template('admin/batches/index.html', batches=batch_list, programs=progs)
 
 
-@admin_bp.route('/classes/create', methods=['GET', 'POST'])
+@admin_bp.route('/batches/create', methods=['GET', 'POST'])
 @login_required
 @admin_required
-def class_create():
+def batch_create():
     if request.method == 'POST':
-        DepartmentService.create_class(request.form.to_dict())
-        flash('Class created.', 'success')
-        return redirect(url_for('admin.classes'))
+        DepartmentService.create_batch(request.form.to_dict())
+        flash('Batch created.', 'success')
+        return redirect(url_for('admin.batches'))
     progs = DepartmentService.get_programs()
-    return render_template('admin/classes/create.html', programs=progs)
+    return render_template('admin/batches/create.html', programs=progs)
 
 
-@admin_bp.route('/classes/edit/<int:cls_id>', methods=['GET', 'POST'])
+@admin_bp.route('/batches/edit/<int:batch_id>', methods=['GET', 'POST'])
 @login_required
 @admin_required
-def class_edit(cls_id):
-    cls = DepartmentService.get_class_by_id(cls_id)
-    if not cls:
-        flash('Class not found.', 'danger')
-        return redirect(url_for('admin.classes'))
+def batch_edit(batch_id):
+    batch = DepartmentService.get_batch_by_id(batch_id)
+    if not batch:
+        flash('Batch not found.', 'danger')
+        return redirect(url_for('admin.batches'))
     if request.method == 'POST':
-        DepartmentService.update_class(cls, request.form.to_dict())
-        flash('Class updated.', 'success')
-        return redirect(url_for('admin.classes'))
+        DepartmentService.update_batch(batch, request.form.to_dict())
+        flash('Batch updated.', 'success')
+        return redirect(url_for('admin.batches'))
     progs = DepartmentService.get_programs()
-    return render_template('admin/classes/edit.html', cls=cls, programs=progs)
+    return render_template('admin/batches/edit.html', batch=batch, programs=progs)
 
 
-@admin_bp.route('/classes/delete/<int:cls_id>', methods=['POST'])
+@admin_bp.route('/batches/delete/<int:batch_id>', methods=['POST'])
 @login_required
 @admin_required
-def class_delete(cls_id):
-    cls = DepartmentService.get_class_by_id(cls_id)
-    if cls:
-        DepartmentService.delete_class(cls)
-        flash('Class deleted.', 'success')
-    return redirect(url_for('admin.classes'))
+def batch_delete(batch_id):
+    batch = DepartmentService.get_batch_by_id(batch_id)
+    if batch:
+        DepartmentService.delete_batch(batch)
+        flash('Batch deleted.', 'success')
+    return redirect(url_for('admin.batches'))
+
+
+# ───────────── SEMESTERS ─────────────
+
+@admin_bp.route('/semesters')
+@login_required
+@admin_required
+def semesters():
+    sem_list = DepartmentService.get_semesters()
+    batch_list = DepartmentService.get_batches()
+    return render_template('admin/semesters/index.html', semesters=sem_list, batches=batch_list)
+
+
+@admin_bp.route('/semesters/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def semester_create():
+    if request.method == 'POST':
+        DepartmentService.create_semester(request.form.to_dict())
+        flash('Semester created.', 'success')
+        return redirect(url_for('admin.semesters'))
+    batch_list = DepartmentService.get_batches()
+    return render_template('admin/semesters/create.html', batches=batch_list)
+
+
+@admin_bp.route('/semesters/edit/<int:sem_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def semester_edit(sem_id):
+    sem = DepartmentService.get_semester_by_id(sem_id)
+    if not sem:
+        flash('Semester not found.', 'danger')
+        return redirect(url_for('admin.semesters'))
+    if request.method == 'POST':
+        DepartmentService.update_semester(sem, request.form.to_dict())
+        flash('Semester updated.', 'success')
+        return redirect(url_for('admin.semesters'))
+    batch_list = DepartmentService.get_batches()
+    return render_template('admin/semesters/edit.html', sem=sem, batches=batch_list)
+
+
+@admin_bp.route('/semesters/delete/<int:sem_id>', methods=['POST'])
+@login_required
+@admin_required
+def semester_delete(sem_id):
+    sem = DepartmentService.get_semester_by_id(sem_id)
+    if sem:
+        DepartmentService.delete_semester(sem)
+        flash('Semester deleted.', 'success')
+    return redirect(url_for('admin.semesters'))
 
 
 # ───────────── SUBJECTS ─────────────
@@ -276,18 +328,21 @@ def subjects():
 @login_required
 @admin_required
 def subject_create():
+    from app.models.user import User
     if request.method == 'POST':
         DepartmentService.create_subject(request.form.to_dict())
         flash('Subject created.', 'success')
         return redirect(url_for('admin.subjects'))
     depts = DepartmentService.get_all()
-    return render_template('admin/subjects/create.html', departments=depts)
+    teachers = User.query.filter_by(role='teacher').order_by(User.full_name).all()
+    return render_template('admin/subjects/create.html', departments=depts, teachers=teachers)
 
 
 @admin_bp.route('/subjects/edit/<int:subj_id>', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def subject_edit(subj_id):
+    from app.models.user import User
     subj = DepartmentService.get_subject_by_id(subj_id)
     if not subj:
         flash('Subject not found.', 'danger')
@@ -297,7 +352,8 @@ def subject_edit(subj_id):
         flash('Subject updated.', 'success')
         return redirect(url_for('admin.subjects'))
     depts = DepartmentService.get_all()
-    return render_template('admin/subjects/edit.html', subj=subj, departments=depts)
+    teachers = User.query.filter_by(role='teacher').order_by(User.full_name).all()
+    return render_template('admin/subjects/edit.html', subj=subj, departments=depts, teachers=teachers)
 
 
 @admin_bp.route('/subjects/delete/<int:subj_id>', methods=['POST'])
@@ -309,6 +365,137 @@ def subject_delete(subj_id):
         DepartmentService.delete_subject(subj)
         flash('Subject deleted.', 'success')
     return redirect(url_for('admin.subjects'))
+
+
+# ───────────── TEACHERS ─────────────
+
+@admin_bp.route('/teachers')
+@login_required
+@admin_required
+def teachers():
+    from app.models.user import User
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    dept_id = request.args.get('department_id', type=int)
+    q = User.query.filter_by(role='teacher').order_by(User.full_name)
+    if search:
+        like = f'%{search}%'
+        q = q.filter(db.or_(User.full_name.ilike(like), User.email.ilike(like)))
+    if dept_id:
+        q = q.filter_by(department_id=dept_id)
+    pagination = q.paginate(page=page, per_page=20, error_out=False)
+    depts = DepartmentService.get_all()
+    return render_template('admin/teachers/index.html', pagination=pagination, departments=depts,
+                           search=search, dept_id=dept_id)
+
+
+@admin_bp.route('/teachers/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def teacher_create():
+    from app.services.auth_service import AuthService
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        user, error = AuthService.create_user(
+            email=data['email'],
+            password=data.get('password') or 'Teacher@123',
+            full_name=data['full_name'],
+            role='teacher',
+            phone=data.get('phone'),
+            department_id=data.get('department_id') or None,
+            is_active=True,
+        )
+        if error:
+            flash(error, 'danger')
+        else:
+            flash('Teacher created.', 'success')
+            return redirect(url_for('admin.teachers'))
+    depts = DepartmentService.get_all()
+    return render_template('admin/teachers/create.html', departments=depts)
+
+
+@admin_bp.route('/teachers/edit/<int:teacher_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def teacher_edit(teacher_id):
+    from app.models.user import User
+    from app.services.auth_service import AuthService
+    teacher = db.session.get(User, teacher_id)
+    if not teacher or teacher.role != 'teacher':
+        flash('Teacher not found.', 'danger')
+        return redirect(url_for('admin.teachers'))
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        for field in ['full_name', 'phone']:
+            if field in data:
+                setattr(teacher, field, data[field])
+        if 'department_id' in data:
+            teacher.department_id = int(data['department_id']) if data['department_id'] else None
+        if data.get('password'):
+            teacher.password_hash = AuthService.hash_password(data['password'])
+        teacher.is_active = 'is_active' in data
+        db.session.commit()
+        flash('Teacher updated.', 'success')
+        return redirect(url_for('admin.teacher_edit', teacher_id=teacher.id))
+    depts = DepartmentService.get_all()
+    semesters = DepartmentService.get_semesters()
+    assigned_subjects = DepartmentService.get_subjects(department_id=None)
+    assigned_subjects = [s for s in assigned_subjects if s.teacher_id == teacher.id]
+    return render_template('admin/teachers/edit.html', teacher=teacher, departments=depts,
+                           semesters=semesters, assigned_subjects=assigned_subjects)
+
+
+@admin_bp.route('/teachers/delete/<int:teacher_id>', methods=['POST'])
+@login_required
+@admin_required
+def teacher_delete(teacher_id):
+    from app.models.user import User
+    teacher = db.session.get(User, teacher_id)
+    if teacher and teacher.role == 'teacher':
+        Subject.query.filter_by(teacher_id=teacher.id).update({'teacher_id': None})
+        db.session.delete(teacher)
+        db.session.commit()
+        flash('Teacher deleted.', 'success')
+    return redirect(url_for('admin.teachers'))
+
+
+@admin_bp.route('/teachers/<int:teacher_id>/assign-semester', methods=['POST'])
+@login_required
+@admin_required
+def teacher_assign_semester(teacher_id):
+    """Assign a teacher to every subject in a given semester (within their own department)."""
+    from app.models.user import User
+    teacher = db.session.get(User, teacher_id)
+    if not teacher or teacher.role != 'teacher':
+        flash('Teacher not found.', 'danger')
+        return redirect(url_for('admin.teachers'))
+    semester_id = request.form.get('semester_id', type=int)
+    if not semester_id:
+        flash('Please select a semester.', 'danger')
+        return redirect(url_for('admin.teacher_edit', teacher_id=teacher.id))
+    subjects = DepartmentService.get_subjects(semester_id=semester_id)
+    if teacher.department_id:
+        subjects = [s for s in subjects if s.department_id == teacher.department_id]
+    if not subjects:
+        flash('No subjects found in that semester for this teacher\'s department.', 'warning')
+        return redirect(url_for('admin.teacher_edit', teacher_id=teacher.id))
+    for subj in subjects:
+        subj.teacher_id = teacher.id
+    db.session.commit()
+    flash(f'Assigned {teacher.full_name} to {len(subjects)} subject(s) in that semester.', 'success')
+    return redirect(url_for('admin.teacher_edit', teacher_id=teacher.id))
+
+
+@admin_bp.route('/teachers/<int:teacher_id>/unassign-subject/<int:subject_id>', methods=['POST'])
+@login_required
+@admin_required
+def teacher_unassign_subject(teacher_id, subject_id):
+    subj = DepartmentService.get_subject_by_id(subject_id)
+    if subj and subj.teacher_id == teacher_id:
+        subj.teacher_id = None
+        db.session.commit()
+        flash('Subject unassigned.', 'success')
+    return redirect(url_for('admin.teacher_edit', teacher_id=teacher_id))
 
 
 # ───────────── STUDENTS ─────────────
@@ -373,6 +560,20 @@ def student_delete(student_id):
     return redirect(url_for('admin.students'))
 
 
+@admin_bp.route('/students/<int:student_id>/promote', methods=['POST'])
+@login_required
+@admin_required
+def student_promote(student_id):
+    from app.services.allocation_service import AllocationService
+    student = StudentService.get_by_id(student_id)
+    if not student:
+        flash('Student not found.', 'danger')
+        return redirect(url_for('admin.students'))
+    success, message = AllocationService.promote_student(student)
+    flash(message, 'success' if success else 'info')
+    return redirect(url_for('admin.students'))
+
+
 @admin_bp.route('/students/import', methods=['POST'])
 @login_required
 @admin_required
@@ -383,8 +584,9 @@ def student_import():
         return redirect(url_for('admin.students'))
     dept_id = request.form.get('department_id', type=int)
     prog_id = request.form.get('program_id', type=int)
-    cls_id = request.form.get('class_id', type=int)
-    success, errors = StudentService.import_from_csv(file.stream, dept_id, prog_id, cls_id)
+    batch_id = request.form.get('batch_id', type=int)
+    semester_id = request.form.get('semester_id', type=int)
+    success, errors = StudentService.import_from_csv(file.stream, dept_id, prog_id, batch_id, semester_id)
     flash(f'Imported {success} students. {len(errors)} errors.', 'info')
     for e in errors[:10]:
         flash(e, 'warning')
@@ -625,6 +827,34 @@ def notification_create():
     return render_template('admin/notifications/create.html', departments=depts)
 
 
+@admin_bp.route('/notifications/batches-by-department')
+@login_required
+@admin_required
+def get_batches_by_department():
+    """AJAX: batches under all programs of a department, for notification targeting."""
+    dept_id = request.args.get('department_id', type=int)
+    if not dept_id:
+        return jsonify([])
+    progs = DepartmentService.get_programs(department_id=dept_id)
+    result = []
+    for p in progs:
+        for b in DepartmentService.get_batches(program_id=p.id):
+            result.append({'id': b.id, 'name': f'{p.name} — {b.label}'})
+    return jsonify(result)
+
+
+@admin_bp.route('/notifications/semesters-by-batch')
+@login_required
+@admin_required
+def get_semesters_by_batch():
+    """AJAX: semesters under a batch, for notification targeting."""
+    batch_id = request.args.get('batch_id', type=int)
+    if not batch_id:
+        return jsonify([])
+    sems = DepartmentService.get_semesters(batch_id=batch_id)
+    return jsonify([{'id': s.id, 'name': s.name} for s in sems])
+
+
 # ───────────── AI SETTINGS ─────────────
 
 @admin_bp.route('/ai-settings')
@@ -723,3 +953,110 @@ def chat_view(session_id):
 def analytics():
     data = AdminController.get_dashboard_data()
     return render_template('admin/analytics/index.html', **data)
+
+
+# ───────────── HOD ASSIGNMENT ─────────────
+
+@admin_bp.route('/departments/<int:dept_id>/hod', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def department_hod(dept_id):
+    from app import db
+    from app.models.user import User
+    from app.services.audit_service import AuditService
+    dept = DepartmentService.get_by_id(dept_id)
+    if not dept:
+        flash('Department not found.', 'danger')
+        return redirect(url_for('admin.departments'))
+    if request.method == 'POST':
+        user_id = request.form.get('hod_user_id', type=int)
+        if user_id:
+            user = db.session.get(User, user_id)
+            if not user:
+                flash('User not found.', 'danger')
+                return redirect(url_for('admin.department_hod', dept_id=dept_id))
+            user.role = 'hod'
+            user.department_id = dept.id
+            dept.hod_user_id = user.id
+            db.session.commit()
+            AuditService.log(current_user.id, 'assign_hod', 'department', dept.id, request.remote_addr)
+            flash(f'{user.full_name} assigned as HOD.', 'success')
+        else:
+            dept.hod_user_id = None
+            db.session.commit()
+            flash('HOD cleared.', 'info')
+        return redirect(url_for('admin.departments'))
+    candidates = User.query.filter(User.role.in_(('teacher', 'hod', 'admin'))).order_by(User.full_name).all()
+    return render_template('admin/departments/hod.html', dept=dept, candidates=candidates)
+
+
+# ───────────── USER ROLE MANAGEMENT ─────────────
+
+@admin_bp.route('/users')
+@login_required
+@admin_required
+def users():
+    from app.models.user import User
+    page = request.args.get('page', 1, type=int)
+    pagination = User.query.order_by(User.role, User.full_name).paginate(page=page, per_page=25, error_out=False)
+    depts = DepartmentService.get_all()
+    return render_template('admin/users/index.html', pagination=pagination, departments=depts)
+
+
+@admin_bp.route('/users/<int:user_id>/role', methods=['POST'])
+@login_required
+@admin_required
+def user_role(user_id):
+    from app import db
+    from app.models.user import User
+    from app.services.audit_service import AuditService
+    user = db.session.get(User, user_id)
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('admin.users'))
+    new_role = request.form.get('role')
+    valid = ('super_admin', 'admin', 'hod', 'teacher', 'student')
+    if new_role not in valid:
+        flash('Invalid role.', 'danger')
+        return redirect(url_for('admin.users'))
+    # Protect the last super_admin from demotion
+    if user.role == 'super_admin' and new_role != 'super_admin':
+        remaining = User.query.filter_by(role='super_admin').count()
+        if remaining <= 1:
+            flash('Cannot demote the only super admin.', 'danger')
+            return redirect(url_for('admin.users'))
+    old_role = user.role
+    user.role = new_role
+    dept_id = request.form.get('department_id', type=int)
+    if dept_id and new_role in ('hod', 'teacher', 'student'):
+        user.department_id = dept_id
+    db.session.commit()
+    AuditService.log(current_user.id, f'role_change:{old_role}->{new_role}', 'user', user.id, request.remote_addr)
+    flash('Role updated.', 'success')
+    return redirect(url_for('admin.users'))
+
+
+# ───────────── CROSS-DEPARTMENT REPORTS ─────────────
+
+@admin_bp.route('/reports')
+@login_required
+@admin_required
+def reports():
+    from app.services.quiz_service import QuizService
+    rows = QuizService.cross_department_stats()
+    return render_template('admin/reports/index.html', rows=rows)
+
+
+# ───────────── THEME PORTAL (super admin) ─────────────
+
+@admin_bp.route('/theme', methods=['GET', 'POST'])
+@login_required
+@super_admin_required
+def theme():
+    from app.services.theme_service import ThemeService
+    if request.method == 'POST':
+        ThemeService.update_theme(request.form.to_dict(), request.files, current_user.id)
+        flash('Theme updated.', 'success')
+        return redirect(url_for('admin.theme'))
+    active = ThemeService.get_active_theme()
+    return render_template('admin/theme/index.html', theme=active)

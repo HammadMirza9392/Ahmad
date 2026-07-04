@@ -27,12 +27,20 @@ class APIController:
         return jsonify([{'id': p.id, 'name': p.name} for p in programs])
 
     @staticmethod
-    def get_classes_for_program():
+    def get_batches_for_program():
         prog_id = request.args.get('program_id', type=int)
         if not prog_id:
             return jsonify([])
-        classes = DepartmentService.get_classes(program_id=prog_id, active_only=True)
-        return jsonify([{'id': c.id, 'name': c.name} for c in classes])
+        batches = DepartmentService.get_batches(program_id=prog_id, active_only=True)
+        return jsonify([{'id': b.id, 'name': b.label} for b in batches])
+
+    @staticmethod
+    def get_semesters_for_batch():
+        batch_id = request.args.get('batch_id', type=int)
+        if not batch_id:
+            return jsonify([])
+        semesters = DepartmentService.get_semesters(batch_id=batch_id, active_only=True)
+        return jsonify([{'id': s.id, 'name': s.name} for s in semesters])
 
     @staticmethod
     def get_subjects_for_department():

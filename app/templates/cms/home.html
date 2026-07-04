@@ -162,7 +162,7 @@
                     {% if article.image %}
                     <img src="{{ article.image }}" class="card-img-top" alt="{{ article.title }}" style="height:200px;object-fit:cover;" loading="lazy">
                     {% else %}
-                    <div class="d-flex align-items-center justify-content-center card-img-top" style="height:200px;background:linear-gradient(135deg,#667eea,#764ba2);">
+                    <div class="d-flex align-items-center justify-content-center card-img-top" style="height:200px;background:linear-gradient(135deg,var(--primary),var(--secondary));">
                         <i class="bi bi-newspaper fs-1 text-white"></i>
                     </div>
                     {% endif %}
@@ -257,7 +257,7 @@
 
 <!-- Principal / VC Messages -->
 {% if institution and (institution.principal_message or institution.vc_message) %}
-<section class="section" style="background:linear-gradient(135deg,#1a56db08,#7c3aed08);">
+<section class="section" style="background:linear-gradient(135deg,color-mix(in srgb, var(--primary) 3%, transparent),color-mix(in srgb, var(--secondary) 3%, transparent));">
     <div class="container">
         <h2 class="section-title">Messages from Leadership</h2>
         <p class="section-subtitle">Inspiring words from our academic leaders</p>

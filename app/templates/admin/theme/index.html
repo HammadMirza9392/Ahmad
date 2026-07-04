@@ -1,0 +1,189 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Theme Portal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1"><i class="bi bi-palette me-2"></i>Theme Portal</h1>
+        <p class="text-muted mb-0 small">Changes here apply instantly across the entire site — admin, HOD, teacher, and student dashboards, the public website, the login page, and the AI chat widget.</p>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<form method="POST" action="{{ url_for('admin.theme') }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="card-title mb-0">Brand Colors</h5></div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Primary</label>
+                            <input type="color" class="form-control form-control-color w-100 theme-input" data-var="--pv-primary" name="primary_color" value="{{ theme.primary_color }}">
+                            <div class="form-text">Buttons, active nav, links, gradients.</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Secondary</label>
+                            <input type="color" class="form-control form-control-color w-100 theme-input" data-var="--pv-secondary" name="secondary_color" value="{{ theme.secondary_color }}">
+                            <div class="form-text">Gradient partner, sidebar tint.</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Accent</label>
+                            <input type="color" class="form-control form-control-color w-100 theme-input" data-var="--pv-accent" name="accent_color" value="{{ theme.accent_color }}">
+                            <div class="form-text">Highlights and badges.</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Background</label>
+                            <input type="color" class="form-control form-control-color w-100 theme-input" data-var="--pv-bg" name="bg_color" value="{{ theme.bg_color }}">
+                            <div class="form-text">Page background behind cards.</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Body Text</label>
+                            <input type="color" class="form-control form-control-color w-100 theme-input" data-var="--pv-text" name="text_color" value="{{ theme.text_color }}">
+                            <div class="form-text">Default reading text color.</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Link Color</label>
+                            <div class="input-group">
+                                <input type="color" class="form-control form-control-color theme-input" data-var="--pv-link" name="link_color" value="{{ theme.link_color or theme.primary_color }}" style="max-width:60px;">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="clearLinkColor" title="Use primary color">Reset</button>
+                            </div>
+                            <div class="form-text">Leave as primary, or pick a distinct link color.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="card-title mb-0">Text-on-Color Contrast</h5></div>
+                <div class="card-body">
+                    <p class="small text-muted">Controls readability of text placed directly over your brand colors — the hero banner and the dashboard sidebar. Usually white, but switch to dark if you pick a very light primary/secondary color.</p>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Banner / Hero Text</label>
+                            <input type="color" class="form-control form-control-color w-100 theme-input" data-var="--pv-banner-text" name="banner_text_color" value="{{ theme.banner_text_color or '#ffffff' }}">
+                            <div class="form-text">Text over the homepage hero and inner page banners.</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Sidebar Text</label>
+                            <input type="color" class="form-control form-control-color w-100 theme-input" data-var="--pv-sidebar-text" name="sidebar_text_color" value="{{ theme.sidebar_text_color or '#ffffff' }}">
+                            <div class="form-text">Nav labels in every dashboard sidebar.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="card-title mb-0">Typography & Mode</h5></div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Display Font</label>
+                            <select class="form-select" name="font_display">
+                                {% for f in ['Inter','Poppins','Roboto','Montserrat','Lato','Nunito','Playfair Display'] %}
+                                <option value="{{ f }}" {% if theme.font_display == f %}selected{% endif %}>{{ f }}</option>{% endfor %}
+                            </select>
+                            <div class="form-text">Headings across the whole site.</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Body Font</label>
+                            <select class="form-select" name="font_body">
+                                {% for f in ['Inter','Poppins','Roboto','Montserrat','Lato','Nunito','Open Sans'] %}
+                                <option value="{{ f }}" {% if theme.font_body == f %}selected{% endif %}>{{ f }}</option>{% endfor %}
+                            </select>
+                            <div class="form-text">Paragraphs, tables, form labels.</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Mode</label>
+                            <select class="form-select" name="mode">
+                                {% for m in ['light','dark','auto'] %}
+                                <option value="{{ m }}" {% if theme.mode == m %}selected{% endif %}>{{ m|capitalize }}</option>{% endfor %}
+                            </select>
+                            <div class="form-text">Default appearance for dashboards.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="card-title mb-0">Branding</h5></div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Logo</label>
+                        <input type="file" class="form-control" name="logo" accept="image/*">
+                        {% if theme.logo_url %}<div class="form-text">Current: <a href="{{ theme.logo_url }}" target="_blank">view</a> — shown in every sidebar, the login page, and the public navbar.</div>{% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Favicon</label>
+                        <input type="file" class="form-control" name="favicon" accept="image/*">
+                        {% if theme.favicon_url %}<div class="form-text">Current: <a href="{{ theme.favicon_url }}" target="_blank">view</a></div>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i> Save Theme</button>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card sticky-top" style="top:1rem;">
+                <div class="card-header"><h5 class="card-title mb-0">Live Preview</h5></div>
+                <div class="card-body p-0" id="themePreview"
+                     style="--pv-primary: {{ theme.primary_color }}; --pv-secondary: {{ theme.secondary_color }}; --pv-accent: {{ theme.accent_color }}; --pv-bg: {{ theme.bg_color }}; --pv-text: {{ theme.text_color }}; --pv-banner-text: {{ theme.banner_text_color or '#ffffff' }}; --pv-sidebar-text: {{ theme.sidebar_text_color or '#ffffff' }}; --pv-link: {{ theme.link_color or theme.primary_color }};">
+
+                    <!-- Sidebar sample -->
+                    <div style="display:flex;">
+                        <div style="width:120px;background:linear-gradient(180deg, color-mix(in srgb, var(--pv-secondary) 55%, #0f172a), color-mix(in srgb, var(--pv-secondary) 35%, #0f172a));padding:12px 8px;">
+                            <div style="color:var(--pv-sidebar-text);font-weight:700;font-size:0.7rem;margin-bottom:10px;opacity:0.9;">PANEL</div>
+                            <div style="background:var(--pv-primary);color:var(--pv-sidebar-text);border-radius:6px;padding:6px 8px;font-size:0.7rem;margin-bottom:4px;">Dashboard</div>
+                            <div style="color:color-mix(in srgb, var(--pv-sidebar-text) 60%, transparent);padding:6px 8px;font-size:0.7rem;">Subjects</div>
+                            <div style="color:color-mix(in srgb, var(--pv-sidebar-text) 60%, transparent);padding:6px 8px;font-size:0.7rem;">Reports</div>
+                        </div>
+                        <div style="flex:1;background:var(--pv-bg);padding:16px;">
+                            <h4 style="color:var(--pv-text);font-size:1rem;margin-bottom:6px;">Heading Sample</h4>
+                            <p style="color:var(--pv-text);font-size:0.8rem;">Body text preview using your chosen colors, with a <a href="#" style="color:var(--pv-link);" onclick="return false;">sample link</a>.</p>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button type="button" class="btn btn-sm" style="background:var(--pv-primary);color:#fff;border:none;">Primary</button>
+                                <button type="button" class="btn btn-sm" style="background:var(--pv-secondary);color:#fff;border:none;">Secondary</button>
+                                <button type="button" class="btn btn-sm" style="background:var(--pv-accent);color:#fff;border:none;">Accent</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Banner sample -->
+                    <div style="background:linear-gradient(135deg, var(--pv-primary), var(--pv-secondary));color:var(--pv-banner-text);padding:24px 16px;text-align:center;">
+                        <div style="font-weight:800;font-size:1.1rem;">Hero Banner Sample</div>
+                        <div style="font-size:0.8rem;opacity:0.9;margin-top:4px;">This is how banner text looks on your gradient.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.theme-input').forEach(function(input) {
+    input.addEventListener('input', function() {
+        document.getElementById('themePreview').style.setProperty(this.dataset.var, this.value);
+    });
+});
+document.getElementById('clearLinkColor')?.addEventListener('click', function() {
+    const primary = document.querySelector('input[name="primary_color"]').value;
+    const linkInput = document.querySelector('input[name="link_color"]');
+    linkInput.value = primary;
+    document.getElementById('themePreview').style.setProperty('--pv-link', primary);
+});
+</script>
+{% endblock %}

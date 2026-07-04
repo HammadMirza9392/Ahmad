@@ -1,0 +1,41 @@
+{% extends "layouts/teacher.html" %}
+{% block title %}Attempts{% endblock %}
+{% block page_title %}Attempts{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-list-check me-2"></i>{{ quiz.title }} — Attempts</h1>
+    <a href="{{ url_for('teacher.quizzes') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back</a>
+</div>
+
+<div class="card"><div class="card-body p-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light"><tr><th>#</th><th>Student</th><th>Attempt</th><th>Status</th><th>Score</th><th>Submitted</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+                {% for a in attempts %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td class="fw-semibold">{{ a.student.full_name if a.student else a.student_id }}</td>
+                    <td>#{{ a.attempt_no }}</td>
+                    <td>
+                        {% set badge = {'in_progress':'warning','submitted':'info','graded':'success'} %}
+                        <span class="badge bg-{{ badge.get(a.status,'secondary') }}">{{ a.status }}</span>
+                    </td>
+                    <td>{{ a.score if a.score is not none else '—' }}</td>
+                    <td>{{ a.submitted_at.strftime('%Y-%m-%d %H:%M') if a.submitted_at else '—' }}</td>
+                    <td class="text-end">
+                        {% if a.status == 'submitted' %}
+                        <a href="{{ url_for('teacher.attempt_grade', attempt_id=a.id) }}" class="btn btn-sm btn-outline-warning">Grade</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not attempts %}
+                <tr><td colspan="7" class="text-center py-4 text-muted">No attempts yet.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div></div>
+{% endblock %}

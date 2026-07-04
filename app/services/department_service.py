@@ -1,13 +1,64 @@
 """
 Department Service
-CRUD operations and business logic for departments, programs, classes, subjects.
+CRUD operations and business logic for departments, programs, batches, semesters, subjects.
 """
+from datetime import date
 from app import db
 from app.models.department import Department
 from app.models.program import Program
-from app.models.classes import Class, ClassSubject
+from app.models.batch import Batch
+from app.models.semester import Semester
 from app.models.subject import Subject
 from app.utils.helpers import generate_slug
+
+# Columns that need type coercion when assigned from raw form data (always strings).
+_BOOLEAN_FIELDS = {'is_active'}
+_INTEGER_FIELDS = {
+    'sort_order', 'total_semesters', 'start_year', 'end_year', 'number',
+    'credit_hours', 'department_id', 'program_id', 'batch_id', 'semester_id',
+    'teacher_id',
+}
+
+
+_DATE_FIELDS = {'start_date', 'end_date'}
+
+
+def _coerce(field, value):
+    """Convert a raw form-string value to the type its column expects.
+    HTML checkboxes only submit a value ('1'/'on'/etc.) when checked and are
+    absent entirely when unchecked — callers must handle the absent case
+    themselves; this only coerces values that ARE present."""
+    if value is None or value == '':
+        return None
+    if field in _BOOLEAN_FIELDS:
+        if isinstance(value, bool):
+            return value
+        return str(value).strip().lower() in ('1', 'true', 'on', 'yes')
+    if field in _INTEGER_FIELDS:
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
+    if field in _DATE_FIELDS:
+        if isinstance(value, date):
+            return value
+        try:
+            return date.fromisoformat(str(value))
+        except ValueError:
+            return None
+    return value
+
+
+def _apply_fields(obj, data, fields, checkbox_fields=()):
+    """Assign `fields` from `data` onto `obj` with type coercion.
+    `checkbox_fields` are treated as HTML checkboxes: since an unchecked box
+    sends no key at all, its absence from `data` means False, not "leave
+    unchanged" — so those fields are always set, present or not."""
+    for field in fields:
+        if field in checkbox_fields:
+            setattr(obj, field, field in data and _coerce(field, data[field]))
+        elif field in data:
+            setattr(obj, field, _coerce(field, data[field]))
 
 
 class DepartmentService:
@@ -41,8 +92,8 @@ class DepartmentService:
             hod_message=data.get('hod_message'),
             hod_email=data.get('hod_email'),
             hod_phone=data.get('hod_phone'),
-            sort_order=data.get('sort_order', 0),
-            is_active=data.get('is_active', True),
+            sort_order=_coerce('sort_order', data.get('sort_order')) or 0,
+            is_active='is_active' in data and _coerce('is_active', data['is_active']),
         )
         db.session.add(dept)
         db.session.commit()
@@ -54,9 +105,7 @@ class DepartmentService:
             'name', 'description', 'image', 'hod_name', 'hod_image',
             'hod_message', 'hod_email', 'hod_phone', 'sort_order', 'is_active',
         ]
-        for field in updatable:
-            if field in data:
-                setattr(dept, field, data[field])
+        _apply_fields(dept, data, updatable, checkbox_fields={'is_active'})
         if 'name' in data:
             dept.slug = generate_slug(data['name'])
         db.session.commit()
@@ -89,10 +138,11 @@ class DepartmentService:
             slug=generate_slug(data['name']),
             description=data.get('description', ''),
             duration=data.get('duration'),
+            total_semesters=_coerce('total_semesters', data.get('total_semesters')),
             degree_type=data.get('degree_type'),
-            department_id=data['department_id'],
-            is_active=data.get('is_active', True),
-            sort_order=data.get('sort_order', 0),
+            department_id=_coerce('department_id', data['department_id']),
+            is_active='is_active' in data and _coerce('is_active', data['is_active']),
+            sort_order=_coerce('sort_order', data.get('sort_order')) or 0,
         )
         db.session.add(prog)
         db.session.commit()
@@ -100,9 +150,9 @@ class DepartmentService:
 
     @staticmethod
     def update_program(prog, data):
-        for field in ['name', 'description', 'duration', 'degree_type', 'department_id', 'is_active', 'sort_order']:
-            if field in data:
-                setattr(prog, field, data[field])
+        fields = ['name', 'description', 'duration', 'total_semesters',
+                  'degree_type', 'department_id', 'sort_order', 'is_active']
+        _apply_fields(prog, data, fields, checkbox_fields={'is_active'})
         if 'name' in data:
             prog.slug = generate_slug(data['name'])
         db.session.commit()
@@ -113,11 +163,11 @@ class DepartmentService:
         db.session.delete(prog)
         db.session.commit()
 
-    # ───────────── CLASSES ─────────────
+    # ───────────── BATCHES ─────────────
 
     @staticmethod
-    def get_classes(program_id=None, active_only=False):
-        q = Class.query.order_by(Class.sort_order, Class.name)
+    def get_batches(program_id=None, active_only=False):
+        q = Batch.query.order_by(Batch.sort_order, Batch.start_year, Batch.name)
         if program_id:
             q = q.filter_by(program_id=program_id)
         if active_only:
@@ -125,46 +175,103 @@ class DepartmentService:
         return q.all()
 
     @staticmethod
-    def get_class_by_id(class_id):
-        return db.session.get(Class, class_id)
+    def get_batch_by_id(batch_id):
+        return db.session.get(Batch, batch_id)
 
     @staticmethod
-    def create_class(data):
-        cls = Class(
-            name=data['name'],
-            slug=generate_slug(data['name']),
-            section=data.get('section'),
-            year=data.get('year'),
-            program_id=data['program_id'],
-            is_active=data.get('is_active', True),
-            sort_order=data.get('sort_order', 0),
+    def create_batch(data):
+        start_year = _coerce('start_year', data.get('start_year'))
+        end_year = _coerce('end_year', data.get('end_year'))
+        name = data.get('name') or (f"{start_year}-{end_year}" if start_year and end_year else 'New Batch')
+        batch = Batch(
+            name=name,
+            slug=generate_slug(f"{name}-{data['program_id']}"),
+            start_year=start_year,
+            end_year=end_year,
+            status=data.get('status', 'active'),
+            program_id=_coerce('program_id', data['program_id']),
+            is_active='is_active' in data and _coerce('is_active', data['is_active']),
+            sort_order=_coerce('sort_order', data.get('sort_order')) or 0,
         )
-        db.session.add(cls)
+        db.session.add(batch)
         db.session.commit()
-        return cls
+        return batch
 
     @staticmethod
-    def update_class(cls, data):
-        for field in ['name', 'section', 'year', 'program_id', 'is_active', 'sort_order']:
-            if field in data:
-                setattr(cls, field, data[field])
-        if 'name' in data:
-            cls.slug = generate_slug(data['name'])
+    def update_batch(batch, data):
+        fields = ['name', 'start_year', 'end_year', 'status', 'program_id', 'sort_order', 'is_active']
+        _apply_fields(batch, data, fields, checkbox_fields={'is_active'})
         db.session.commit()
-        return cls
+        return batch
 
     @staticmethod
-    def delete_class(cls):
-        db.session.delete(cls)
+    def delete_batch(batch):
+        db.session.delete(batch)
         db.session.commit()
+
+    # ───────────── SEMESTERS ─────────────
+
+    @staticmethod
+    def get_semesters(batch_id=None, active_only=False):
+        q = Semester.query.order_by(Semester.sort_order, Semester.number, Semester.name)
+        if batch_id:
+            q = q.filter_by(batch_id=batch_id)
+        if active_only:
+            q = q.filter_by(is_active=True)
+        return q.all()
+
+    @staticmethod
+    def get_semester_by_id(semester_id):
+        return db.session.get(Semester, semester_id)
+
+    @staticmethod
+    def create_semester(data):
+        sem = Semester(
+            name=data['name'],
+            slug=generate_slug(f"{data['name']}-{data['batch_id']}"),
+            number=_coerce('number', data.get('number')),
+            start_date=_coerce('start_date', data.get('start_date')),
+            end_date=_coerce('end_date', data.get('end_date')),
+            batch_id=_coerce('batch_id', data['batch_id']),
+            is_active='is_active' in data and _coerce('is_active', data['is_active']),
+            sort_order=_coerce('sort_order', data.get('sort_order')) or 0,
+        )
+        db.session.add(sem)
+        db.session.commit()
+        return sem
+
+    @staticmethod
+    def update_semester(sem, data):
+        fields = ['name', 'number', 'start_date', 'end_date', 'batch_id', 'sort_order', 'is_active']
+        _apply_fields(sem, data, fields, checkbox_fields={'is_active'})
+        db.session.commit()
+        return sem
+
+    @staticmethod
+    def delete_semester(sem):
+        db.session.delete(sem)
+        db.session.commit()
+
+    @staticmethod
+    def get_next_semester(current_semester):
+        """Return the next-higher-number Semester in the same batch, or None."""
+        if current_semester.number is None:
+            return None
+        return (Semester.query
+                .filter(Semester.batch_id == current_semester.batch_id,
+                        Semester.number > current_semester.number)
+                .order_by(Semester.number.asc())
+                .first())
 
     # ───────────── SUBJECTS ─────────────
 
     @staticmethod
-    def get_subjects(department_id=None, active_only=False):
+    def get_subjects(department_id=None, semester_id=None, active_only=False):
         q = Subject.query.order_by(Subject.sort_order, Subject.name)
         if department_id:
             q = q.filter_by(department_id=department_id)
+        if semester_id:
+            q = q.filter_by(semester_id=semester_id)
         if active_only:
             q = q.filter_by(is_active=True)
         return q.all()
@@ -180,10 +287,12 @@ class DepartmentService:
             slug=generate_slug(data['name']),
             code=data.get('code'),
             description=data.get('description', ''),
-            credit_hours=data.get('credit_hours'),
-            department_id=data['department_id'],
-            is_active=data.get('is_active', True),
-            sort_order=data.get('sort_order', 0),
+            credit_hours=_coerce('credit_hours', data.get('credit_hours')),
+            department_id=_coerce('department_id', data['department_id']),
+            semester_id=_coerce('semester_id', data.get('semester_id')),
+            teacher_id=_coerce('teacher_id', data.get('teacher_id')),
+            is_active='is_active' in data and _coerce('is_active', data['is_active']),
+            sort_order=_coerce('sort_order', data.get('sort_order')) or 0,
         )
         db.session.add(subj)
         db.session.commit()
@@ -191,9 +300,9 @@ class DepartmentService:
 
     @staticmethod
     def update_subject(subj, data):
-        for field in ['name', 'code', 'description', 'credit_hours', 'department_id', 'is_active', 'sort_order']:
-            if field in data:
-                setattr(subj, field, data[field])
+        fields = ['name', 'code', 'description', 'credit_hours', 'department_id',
+                  'semester_id', 'teacher_id', 'sort_order', 'is_active']
+        _apply_fields(subj, data, fields, checkbox_fields={'is_active'})
         if 'name' in data:
             subj.slug = generate_slug(data['name'])
         db.session.commit()
@@ -204,25 +313,9 @@ class DepartmentService:
         db.session.delete(subj)
         db.session.commit()
 
-    # ───────────── CLASS-SUBJECT BRIDGE ─────────────
-
     @staticmethod
-    def assign_subject_to_class(class_id, subject_id):
-        existing = ClassSubject.query.filter_by(class_id=class_id, subject_id=subject_id).first()
-        if not existing:
-            cs = ClassSubject(class_id=class_id, subject_id=subject_id)
-            db.session.add(cs)
-            db.session.commit()
-
-    @staticmethod
-    def remove_subject_from_class(class_id, subject_id):
-        cs = ClassSubject.query.filter_by(class_id=class_id, subject_id=subject_id).first()
-        if cs:
-            db.session.delete(cs)
-            db.session.commit()
-
-    @staticmethod
-    def get_subjects_for_class(class_id):
-        """Get all subjects assigned to a specific class."""
-        results = db.session.query(Subject).join(ClassSubject).filter(ClassSubject.class_id == class_id).all()
-        return results
+    def get_subjects_for_semester(semester_id):
+        """Get all subjects belonging to a specific semester."""
+        if not semester_id:
+            return []
+        return Subject.query.filter_by(semester_id=semester_id).order_by(Subject.sort_order, Subject.name).all()

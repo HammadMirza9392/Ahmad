@@ -13,13 +13,14 @@ class ChatService:
 
     @staticmethod
     def create_session(user_id, title='New Chat', department_id=None, program_id=None,
-                       class_id=None, subject_id=None):
+                       batch_id=None, semester_id=None, subject_id=None):
         session = ChatSession(
             user_id=user_id,
             title=title,
             department_id=department_id,
             program_id=program_id,
-            class_id=class_id,
+            batch_id=batch_id,
+            semester_id=semester_id,
             subject_id=subject_id,
         )
         db.session.add(session)

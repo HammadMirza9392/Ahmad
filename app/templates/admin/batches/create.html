@@ -1,0 +1,95 @@
+{% extends "layouts/admin.html" %}
+
+{% block title %}Create Batch{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-plus-circle me-2"></i>Create Batch</h1>
+    <a href="{{ url_for('admin.batches') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back to Batches
+    </a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">Batch Details</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('admin.batch_create') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label for="program_id" class="form-label">Program <span class="text-danger">*</span></label>
+                        <select class="form-select" id="program_id" name="program_id" required>
+                            <option value="" selected disabled>-- Select Program --</option>
+                            {% for program in programs %}
+                            <option value="{{ program.id }}">{{ program.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="name" name="name" placeholder="e.g. BSCS 2022-2026 (auto-generated from years if left blank)">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="start_year" class="form-label">Start Year</label>
+                            <input type="number" class="form-control" id="start_year" name="start_year" placeholder="e.g. 2022">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="end_year" class="form-label">End Year</label>
+                            <input type="number" class="form-control" id="end_year" name="end_year" placeholder="e.g. 2026">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="upcoming">Upcoming</option>
+                            <option value="active" selected>Active</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="sort_order" class="form-label">Sort Order</label>
+                            <input type="number" class="form-control" id="sort_order" name="sort_order" value="0" min="0">
+                            <div class="form-text">Lower numbers appear first.</div>
+                        </div>
+                        <div class="col-md-6 mb-3 d-flex align-items-end">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" checked>
+                                <label class="form-check-label" for="is_active">Active</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('admin.batches') }}" class="btn btn-light">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>Create Batch
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

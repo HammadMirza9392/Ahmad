@@ -1,0 +1,32 @@
+{% extends "layouts/hod.html" %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4"><i class="bi bi-graph-up me-2"></i>Department Report{% if dept %} — {{ dept.name }}{% endif %}</h1>
+
+<div class="card"><div class="card-body p-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light"><tr>
+                <th>Subject</th><th>Quizzes</th><th>Attempts</th><th>Completed</th><th>Completion %</th><th>Avg Score</th>
+            </tr></thead>
+            <tbody>
+                {% for r in rows %}
+                <tr>
+                    <td class="fw-semibold">{{ r.subject.name }}</td>
+                    <td>{{ r.quiz_count }}</td>
+                    <td>{{ r.attempt_count }}</td>
+                    <td>{{ r.completed_count }}</td>
+                    <td>{{ r.completion_rate }}%</td>
+                    <td>{{ r.avg_score }}</td>
+                </tr>
+                {% endfor %}
+                {% if not rows %}
+                <tr><td colspan="6" class="text-center py-4 text-muted">No data yet.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div></div>
+{% endblock %}

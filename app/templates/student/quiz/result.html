@@ -1,0 +1,41 @@
+{% extends "layouts/student.html" %}
+{% block title %}Quiz Result{% endblock %}
+{% block page_title %}Result{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-clipboard-check me-2"></i>{{ quiz.title }} — Result</h1>
+    <a href="{{ url_for('student.quiz') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back</a>
+</div>
+
+<div class="card mb-4"><div class="card-body d-flex justify-content-between align-items-center">
+    <div>
+        <div class="text-muted small">Status</div>
+        <span class="badge bg-{{ 'success' if attempt.status == 'graded' else 'info' }}">{{ attempt.status }}</span>
+    </div>
+    <div class="text-end">
+        <div class="text-muted small">Score</div>
+        <div class="h3 mb-0">{{ attempt.score if attempt.score is not none else 'Pending grading' }}{% if attempt.score is not none %} / {{ quiz.total_marks }}{% endif %}</div>
+    </div>
+</div></div>
+
+{% for question in quiz.questions %}
+{% set ans = answers.get(question.id) %}
+<div class="card mb-3"><div class="card-body">
+    <div class="fw-semibold mb-2">{{ loop.index }}. {{ question.text }}</div>
+    <div class="mb-1"><span class="text-muted">Your answer:</span> {{ ans.answer_text if ans else '—' }}</div>
+    {% if question.type != 'short_answer' %}
+    <div>
+        {% if ans and ans.is_correct %}<span class="badge bg-success"><i class="bi bi-check-lg"></i> Correct</span>
+        {% else %}<span class="badge bg-danger"><i class="bi bi-x-lg"></i> Incorrect</span>
+        <span class="text-muted ms-2">Correct: {{ question.correct_answer }}</span>{% endif %}
+    </div>
+    {% else %}
+    <div>
+        {% if ans and ans.marks_awarded is not none %}<span class="badge bg-success">Graded: {{ ans.marks_awarded }}/{{ question.marks }}</span>
+        {% else %}<span class="badge bg-warning text-dark">Pending manual grading</span>{% endif %}
+    </div>
+    {% endif %}
+</div></div>
+{% endfor %}
+{% endblock %}

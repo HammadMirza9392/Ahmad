@@ -79,7 +79,7 @@
                                 <select class="form-select" id="target_type" name="target_type" required>
                                     <option value="all" selected>All Users</option>
                                     <option value="department">Specific Department</option>
-                                    <option value="class">Specific Class</option>
+                                    <option value="batch">Specific Batch</option>
                                     <option value="semester">Specific Semester</option>
                                 </select>
                             </div>
@@ -92,17 +92,19 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3" id="classGroup" style="display: none;">
-                                <label for="class_id" class="form-label">Class</label>
-                                <select class="form-select" id="class_id" name="class_id">
-                                    <option value="" disabled selected>Select class</option>
+                            <div class="col-md-6 mb-3" id="batchGroup" style="display: none;">
+                                <label for="batch_id" class="form-label">Batch</label>
+                                <select class="form-select" id="batch_id" name="batch_id">
+                                    <option value="" disabled selected>Select batch</option>
                                 </select>
-                                <div class="form-text">Classes will be loaded based on the selected department.</div>
+                                <div class="form-text">Batches will be loaded based on the selected department.</div>
                             </div>
                             <div class="col-md-6 mb-3" id="semesterGroup" style="display: none;">
-                                <label for="semester" class="form-label">Semester</label>
-                                <input type="text" class="form-control" id="semester" name="semester"
-                                       placeholder="e.g., Fall 2025, Spring 2026">
+                                <label for="semester_id" class="form-label">Semester</label>
+                                <select class="form-select" id="semester_id" name="semester_id">
+                                    <option value="" disabled selected>Select semester</option>
+                                </select>
+                                <div class="form-text">Semesters will be loaded based on the selected batch.</div>
                             </div>
                         </div>
 
@@ -151,33 +153,38 @@
     document.addEventListener('DOMContentLoaded', function() {
         const targetType = document.getElementById('target_type');
         const departmentGroup = document.getElementById('departmentGroup');
-        const classGroup = document.getElementById('classGroup');
+        const batchGroup = document.getElementById('batchGroup');
         const semesterGroup = document.getElementById('semesterGroup');
         const departmentSelect = document.getElementById('department_id');
-        const classSelect = document.getElementById('class_id');
+        const batchSelect = document.getElementById('batch_id');
+        const semesterSelect = document.getElementById('semester_id');
 
         function toggleTargetFields() {
             const value = targetType.value;
 
             departmentGroup.style.display = 'none';
-            classGroup.style.display = 'none';
+            batchGroup.style.display = 'none';
             semesterGroup.style.display = 'none';
 
             departmentSelect.removeAttribute('required');
-            classSelect.removeAttribute('required');
-            document.getElementById('semester').removeAttribute('required');
+            batchSelect.removeAttribute('required');
+            semesterSelect.removeAttribute('required');
 
             if (value === 'department') {
                 departmentGroup.style.display = '';
                 departmentSelect.setAttribute('required', 'required');
-            } else if (value === 'class') {
+            } else if (value === 'batch') {
                 departmentGroup.style.display = '';
-                classGroup.style.display = '';
+                batchGroup.style.display = '';
                 departmentSelect.setAttribute('required', 'required');
-                classSelect.setAttribute('required', 'required');
+                batchSelect.setAttribute('required', 'required');
             } else if (value === 'semester') {
+                departmentGroup.style.display = '';
+                batchGroup.style.display = '';
                 semesterGroup.style.display = '';
-                document.getElementById('semester').setAttribute('required', 'required');
+                departmentSelect.setAttribute('required', 'required');
+                batchSelect.setAttribute('required', 'required');
+                semesterSelect.setAttribute('required', 'required');
             }
         }
 
@@ -186,21 +193,42 @@
 
         departmentSelect.addEventListener('change', function() {
             const deptId = this.value;
-            if (deptId && targetType.value === 'class') {
-                classSelect.innerHTML = '<option value="" disabled selected>Loading classes...</option>';
-                fetch('{{ url_for("admin.get_classes_by_department") }}?department_id=' + deptId)
+            if (deptId && (targetType.value === 'batch' || targetType.value === 'semester')) {
+                batchSelect.innerHTML = '<option value="" disabled selected>Loading batches...</option>';
+                fetch('{{ url_for("admin.get_batches_by_department") }}?department_id=' + deptId)
                     .then(response => response.json())
                     .then(data => {
-                        classSelect.innerHTML = '<option value="" disabled selected>Select class</option>';
-                        data.forEach(function(cls) {
+                        batchSelect.innerHTML = '<option value="" disabled selected>Select batch</option>';
+                        data.forEach(function(batch) {
                             const option = document.createElement('option');
-                            option.value = cls.id;
-                            option.textContent = cls.name;
-                            classSelect.appendChild(option);
+                            option.value = batch.id;
+                            option.textContent = batch.name;
+                            batchSelect.appendChild(option);
                         });
                     })
                     .catch(function() {
-                        classSelect.innerHTML = '<option value="" disabled selected>Failed to load classes</option>';
+                        batchSelect.innerHTML = '<option value="" disabled selected>Failed to load batches</option>';
+                    });
+            }
+        });
+
+        batchSelect.addEventListener('change', function() {
+            const batchId = this.value;
+            if (batchId && targetType.value === 'semester') {
+                semesterSelect.innerHTML = '<option value="" disabled selected>Loading semesters...</option>';
+                fetch('{{ url_for("admin.get_semesters_by_batch") }}?batch_id=' + batchId)
+                    .then(response => response.json())
+                    .then(data => {
+                        semesterSelect.innerHTML = '<option value="" disabled selected>Select semester</option>';
+                        data.forEach(function(sem) {
+                            const option = document.createElement('option');
+                            option.value = sem.id;
+                            option.textContent = sem.name;
+                            semesterSelect.appendChild(option);
+                        });
+                    })
+                    .catch(function() {
+                        semesterSelect.innerHTML = '<option value="" disabled selected>Failed to load semesters</option>';
                     });
             }
         });

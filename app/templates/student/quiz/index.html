@@ -4,6 +4,72 @@
 {% block page_title %}AI Quiz Generator{% endblock %}
 
 {% block content %}
+{% if teacher_quizzes %}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 pt-3 px-4">
+        <h5 class="fw-bold mb-0"><i class="bi bi-mortarboard me-2 text-primary"></i>Assigned Quizzes</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light"><tr><th>Title</th><th>Subject</th><th>Status</th><th>Window</th><th class="text-end">Action</th></tr></thead>
+                <tbody>
+                    {% for q in teacher_quizzes %}
+                    {% set badge = {'upcoming':'info','active':'success','expired':'secondary'} %}
+                    <tr>
+                        <td class="fw-semibold">{{ q.title }}</td>
+                        <td>{{ q.subject.name if q.subject else '—' }}</td>
+                        <td><span class="badge bg-{{ badge.get(q.status,'secondary') }}">{{ q.status|capitalize }}</span></td>
+                        <td class="small text-muted">
+                            {{ q.start_at.strftime('%m-%d %H:%M') if q.start_at else '—' }} to {{ q.end_at.strftime('%m-%d %H:%M') if q.end_at else '—' }}
+                        </td>
+                        <td class="text-end">
+                            {% if q.status == 'active' %}
+                            <form method="POST" action="{{ url_for('student.quiz_start', quiz_id=q.id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn btn-sm btn-primary">Start</button>
+                            </form>
+                            {% elif q.status == 'upcoming' %}
+                            <span class="text-muted small">Not yet open</span>
+                            {% else %}
+                            <span class="text-muted small">Closed</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if my_results %}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent border-0 pt-3 px-4">
+        <h5 class="fw-bold mb-0"><i class="bi bi-clipboard-check me-2 text-success"></i>My Results</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light"><tr><th>Quiz</th><th>Status</th><th>Score</th><th>Submitted</th><th class="text-end"></th></tr></thead>
+                <tbody>
+                    {% for a in my_results %}
+                    <tr>
+                        <td class="fw-semibold">{{ a.quiz.title if a.quiz else '—' }}</td>
+                        <td><span class="badge bg-{{ 'success' if a.status == 'graded' else 'info' }}">{{ a.status }}</span></td>
+                        <td>{{ a.score if a.score is not none else 'Pending' }}</td>
+                        <td class="small text-muted">{{ a.submitted_at.strftime('%Y-%m-%d %H:%M') if a.submitted_at else '—' }}</td>
+                        <td class="text-end"><a href="{{ url_for('student.quiz_result', attempt_id=a.id) }}" class="btn btn-sm btn-outline-secondary">View</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="row g-4">
     <!-- Quiz Setup -->
     <div class="col-lg-5">

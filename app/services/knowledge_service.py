@@ -42,7 +42,8 @@ class KnowledgeService:
             content=data.get('content', ''),
             department_id=data.get('department_id'),
             program_id=data.get('program_id'),
-            class_id=data.get('class_id'),
+            batch_id=data.get('batch_id'),
+            semester_id=data.get('semester_id'),
             subject_id=data.get('subject_id'),
             chapter=data.get('chapter'),
             topic=data.get('topic'),
@@ -60,8 +61,8 @@ class KnowledgeService:
         # Save version before updating
         KnowledgeService._save_version(kb, user_id)
 
-        for field in ['title', 'content', 'department_id', 'program_id', 'class_id',
-                       'subject_id', 'chapter', 'topic', 'status', 'content_type', 'tags']:
+        for field in ['title', 'content', 'department_id', 'program_id', 'batch_id',
+                       'semester_id', 'subject_id', 'chapter', 'topic', 'status', 'content_type', 'tags']:
             if field in data:
                 setattr(kb, field, data[field])
         kb.version += 1
@@ -106,9 +107,12 @@ class KnowledgeService:
             db.session.commit()
 
     @staticmethod
-    def get_context_for_student(department_id=None, program_id=None, class_id=None, subject_id=None):
+    def get_context_for_student(department_id=None, program_id=None, batch_id=None,
+                                 semester_id=None, subject_id=None):
         """Retrieve all relevant knowledge entries for a student's academic context.
-        Includes entries at the student's level and all broader scopes.
+        Includes entries at the student's level and all broader scopes. Most
+        specific match wins; entries fall back to progressively broader scope:
+        subject -> semester -> batch -> program -> department -> institution-wide.
         """
         q = KnowledgeBase.query.filter_by(status='published')
 
@@ -118,14 +122,20 @@ class KnowledgeService:
         if subject_id:
             filters.append(KnowledgeBase.subject_id == subject_id)
 
-        # All entries for the student's class (any subject in that class)
-        if class_id:
-            filters.append(KnowledgeBase.class_id == class_id)
+        # All entries for the student's semester (any subject in that semester)
+        if semester_id:
+            filters.append(KnowledgeBase.semester_id == semester_id)
 
-        # Program-level entries (no class specified)
+        # Batch-level entries (no semester specified)
+        if batch_id:
+            filters.append(
+                db.and_(KnowledgeBase.batch_id == batch_id, KnowledgeBase.semester_id.is_(None))
+            )
+
+        # Program-level entries (no batch specified)
         if program_id:
             filters.append(
-                db.and_(KnowledgeBase.program_id == program_id, KnowledgeBase.class_id.is_(None))
+                db.and_(KnowledgeBase.program_id == program_id, KnowledgeBase.batch_id.is_(None))
             )
 
         # Department-level entries (no program specified)
@@ -138,7 +148,8 @@ class KnowledgeService:
         filters.append(
             db.and_(
                 KnowledgeBase.department_id.is_(None), KnowledgeBase.program_id.is_(None),
-                KnowledgeBase.class_id.is_(None), KnowledgeBase.subject_id.is_(None),
+                KnowledgeBase.batch_id.is_(None), KnowledgeBase.semester_id.is_(None),
+                KnowledgeBase.subject_id.is_(None),
             )
         )
 

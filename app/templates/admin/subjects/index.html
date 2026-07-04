@@ -34,6 +34,7 @@
                         <th scope="col">Name</th>
                         <th scope="col">Code</th>
                         <th scope="col">Department</th>
+                        <th scope="col">Teacher</th>
                         <th scope="col">Credit Hours</th>
                         <th scope="col">Active</th>
                         <th scope="col" class="text-end">Actions</th>
@@ -46,6 +47,13 @@
                         <td>{{ subj.name }}</td>
                         <td><span class="badge bg-info text-dark">{{ subj.code or '-' }}</span></td>
                         <td>{{ subj.department.name if subj.department else '-' }}</td>
+                        <td>
+                            {% if subj.teacher %}
+                            {{ subj.teacher.full_name }}
+                            {% else %}
+                            <span class="text-muted">Unassigned</span>
+                            {% endif %}
+                        </td>
                         <td>{{ subj.credit_hours or '-' }}</td>
                         <td>
                             {% if subj.is_active %}
@@ -68,7 +76,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">
+                        <td colspan="8" class="text-center text-muted py-4">
                             <i class="bi bi-inbox fs-3 d-block mb-2"></i>
                             No subjects found. Click "Create Subject" to add one.
                         </td>

@@ -13,17 +13,17 @@
     width:36px;height:36px;border-radius:50%;display:flex;align-items:center;
     justify-content:center;flex-shrink:0;font-size:.85rem;font-weight:700;color:#fff;
 }
-.cv-msg.user .cv-avatar { background:linear-gradient(135deg,#667eea,#764ba2); }
+.cv-msg.user .cv-avatar { background:linear-gradient(135deg,var(--primary),var(--secondary)); }
 .cv-msg.assistant .cv-avatar { background:linear-gradient(135deg,#10b981,#059669); }
 .cv-bubble {
     max-width:75%;padding:14px 18px;border-radius:16px;font-size:.9rem;line-height:1.7;
     word-wrap:break-word;
 }
-.cv-msg.user .cv-bubble { background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-bottom-right-radius:4px; }
+.cv-msg.user .cv-bubble { background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border-bottom-right-radius:4px; }
 .cv-msg.assistant .cv-bubble { background:#fff;border:1px solid #e8ecf0;border-bottom-left-radius:4px; }
 .cv-bubble pre { background:#1e1e2e;border-radius:8px;overflow:hidden;margin:8px 0; }
 .cv-bubble pre code { display:block;padding:12px;font-size:.82rem;color:#cdd6f4; }
-.cv-bubble code:not(pre code) { background:rgba(102,126,234,.1);color:#667eea;padding:1px 5px;border-radius:4px;font-size:.82rem; }
+.cv-bubble code:not(pre code) { background:color-mix(in srgb, var(--primary) 10%, transparent);color:var(--primary);padding:1px 5px;border-radius:4px;font-size:.82rem; }
 .cv-bubble table { width:100%;border-collapse:collapse;margin:8px 0;font-size:.85rem; }
 .cv-bubble th,.cv-bubble td { border:1px solid #e2e8f0;padding:6px 10px; }
 .cv-bubble th { background:#f8fafc; }
@@ -67,8 +67,11 @@
     </div>
     <div class="col-md-3">
         <div class="card p-3 text-center">
-            <div class="text-muted small">Class</div>
-            <div class="fw-bold">{{ session.user.student_class.name if session.user.student_class else 'N/A' }}</div>
+            <div class="text-muted small">Batch / Semester</div>
+            <div class="fw-bold">
+                {{ session.user.student_batch.label if session.user.student_batch else 'N/A' }}
+                {% if session.user.student_semester %} / {{ session.user.student_semester.name }}{% endif %}
+            </div>
         </div>
     </div>
 </div>

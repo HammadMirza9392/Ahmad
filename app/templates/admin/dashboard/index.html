@@ -170,6 +170,8 @@ new Chart(document.getElementById('dailyChatsChart'), {
 });
 
 // AI Usage Pie
+const themeColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#1a56db';
+const themeColorAlt = getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim() || '#7c3aed';
 const aiData = {{ ai_usage | tojson }};
 if (aiData.length > 0) {
     new Chart(document.getElementById('aiUsageChart'), {
@@ -178,7 +180,7 @@ if (aiData.length > 0) {
             labels: aiData.map(d => d.provider),
             datasets: [{
                 data: aiData.map(d => d.count),
-                backgroundColor: ['#667eea', '#764ba2', '#11998e', '#f5576c', '#4facfe'],
+                backgroundColor: [themeColor, themeColorAlt, '#11998e', '#f5576c', '#4facfe'],
             }]
         },
         options: { responsive: true }

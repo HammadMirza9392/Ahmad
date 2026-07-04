@@ -69,6 +69,44 @@
                         </div>
                     </div>
 
+                    <hr>
+                    <h6 class="text-muted mb-3"><i class="bi bi-diagram-3 me-1"></i>Academic Placement</h6>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="program_id" class="form-label">Program</label>
+                            <select class="form-select" id="program_id" name="program_id">
+                                <option value="">-- Select Program --</option>
+                            </select>
+                            <div class="form-text">Loads based on selected department.</div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="batch_id" class="form-label">Batch</label>
+                            <select class="form-select" id="batch_id" name="batch_id">
+                                <option value="">-- Select Batch --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="semester_id" class="form-label">Semester</label>
+                            <select class="form-select" id="semester_id" name="semester_id">
+                                <option value="">-- Select Semester --</option>
+                            </select>
+                            <div class="form-text">The subject will be assigned to this semester.</div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="teacher_id" class="form-label">Teacher</label>
+                            <select class="form-select" id="teacher_id" name="teacher_id">
+                                <option value="">-- Unassigned --</option>
+                                {% for t in teachers %}
+                                <option value="{{ t.id }}">{{ t.full_name }}{% if t.department %} ({{ t.department.name }}){% endif %}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">The teacher responsible for this subject.</div>
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="sort_order" class="form-label">Sort Order</label>
@@ -95,4 +133,24 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.getElementById('department_id').addEventListener('change', function () {
+    loadPrograms(this.value, document.getElementById('program_id'), function () {
+        document.getElementById('batch_id').innerHTML = '<option value="">-- Select Batch --</option>';
+        document.getElementById('semester_id').innerHTML = '<option value="">-- Select Semester --</option>';
+    });
+});
+document.getElementById('program_id').addEventListener('change', function () {
+    loadBatches(this.value, document.getElementById('batch_id'), function () {
+        document.getElementById('semester_id').innerHTML = '<option value="">-- Select Semester --</option>';
+    });
+});
+document.getElementById('batch_id').addEventListener('change', function () {
+    loadSemesters(this.value, document.getElementById('semester_id'));
+});
+</script>
 {% endblock %}

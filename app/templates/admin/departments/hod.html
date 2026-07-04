@@ -1,0 +1,26 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Assign HOD{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-person-badge me-2"></i>Assign HOD — {{ dept.name }}</h1>
+    <a href="{{ url_for('admin.departments') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back</a>
+</div>
+
+<form method="POST" action="{{ url_for('admin.department_hod', dept_id=dept.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="card"><div class="card-body">
+        <div class="mb-3">
+            <label class="form-label">Head of Department</label>
+            <select class="form-select" name="hod_user_id">
+                <option value="">— None —</option>
+                {% for u in candidates %}
+                <option value="{{ u.id }}" {% if dept.hod_user_id == u.id %}selected{% endif %}>{{ u.full_name }} ({{ u.email }}) — {{ u.role }}</option>
+                {% endfor %}
+            </select>
+            <div class="form-text">Assigning sets the user's role to <code>hod</code> and links them to this department.</div>
+        </div>
+    </div></div>
+    <div class="mt-3"><button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i> Save</button></div>
+</form>
+{% endblock %}

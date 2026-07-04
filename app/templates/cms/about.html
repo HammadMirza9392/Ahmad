@@ -47,7 +47,7 @@
 
 <!-- Vision & Mission -->
 {% if institution and (institution.vision or institution.mission) %}
-<section class="section" style="background:linear-gradient(135deg,#1a56db08,#7c3aed08);">
+<section class="section" style="background:linear-gradient(135deg,color-mix(in srgb, var(--primary) 3%, transparent),color-mix(in srgb, var(--secondary) 3%, transparent));">
     <div class="container">
         <div class="row g-4 justify-content-center">
             {% if institution.vision %}
@@ -112,7 +112,7 @@
 
 <!-- Principal Message -->
 {% if institution and institution.principal_message %}
-<section class="section" style="background:linear-gradient(135deg,#1a56db08,#7c3aed08);">
+<section class="section" style="background:linear-gradient(135deg,color-mix(in srgb, var(--primary) 3%, transparent),color-mix(in srgb, var(--secondary) 3%, transparent));">
     <div class="container">
         <h2 class="section-title">Message from the Principal</h2>
         <p class="section-subtitle">{{ institution.principal_name or '' }}</p>

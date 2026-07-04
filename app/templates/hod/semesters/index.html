@@ -1,0 +1,39 @@
+{% extends "layouts/hod.html" %}
+{% block title %}Semesters{% endblock %}
+{% block page_title %}Semesters{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-people me-2"></i>Semesters</h1>
+    <a href="{{ url_for('hod.semester_create') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Add Semester</a>
+</div>
+
+<div class="card"><div class="card-body p-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light"><tr><th>#</th><th>Name</th><th>Batch</th><th>Number</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+                {% for s in semesters %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td class="fw-semibold">{{ s.name }}</td>
+                    <td>{{ s.batch.label if s.batch else '—' }}</td>
+                    <td>{{ s.number or '—' }}</td>
+                    <td>{% if s.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-danger">Inactive</span>{% endif %}</td>
+                    <td class="text-end">
+                        <a href="{{ url_for('hod.semester_edit', sem_id=s.id) }}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil-square"></i> Edit</a>
+                        <form method="POST" action="{{ url_for('hod.semester_delete', sem_id=s.id) }}" class="d-inline" onsubmit="return confirm('Delete this semester?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not semesters %}
+                <tr><td colspan="6" class="text-center py-4 text-muted"><i class="bi bi-inbox fs-1 d-block mb-2"></i>No semesters yet.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div></div>
+{% endblock %}

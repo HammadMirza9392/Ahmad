@@ -15,10 +15,10 @@ class Notification(db.Model):
     notification_type = db.Column(db.String(50), nullable=False)  # news, exam, admission, assignment, holiday, scholarship, result
 
     # Targeting
-    target_type = db.Column(db.String(50), default='all')  # all, department, class, semester
+    target_type = db.Column(db.String(50), default='all')  # all, department, batch, semester
     department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
-    class_id = db.Column(db.Integer, db.ForeignKey('classes.id'))
-    semester = db.Column(db.String(20))
+    batch_id = db.Column(db.Integer, db.ForeignKey('batches.id'))
+    semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id'))
 
     is_active = db.Column(db.Boolean, default=True)
     priority = db.Column(db.String(20), default='normal')  # low, normal, high, urgent

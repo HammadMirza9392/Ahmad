@@ -1,0 +1,35 @@
+{% extends "layouts/hod.html" %}
+{% block title %}Add Program{% endblock %}
+{% block page_title %}Add Program{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-plus-circle me-2"></i>Add Program</h1>
+    <a href="{{ url_for('hod.programs') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back</a>
+</div>
+
+<form method="POST" action="{{ url_for('hod.program_create') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="card"><div class="card-body">
+        <div class="row">
+            <div class="col-md-8 mb-3">
+                <label class="form-label">Program Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="name" required>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Degree Type</label>
+                <input type="text" class="form-control" name="degree_type" placeholder="Bachelor">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Duration</label>
+                <input type="text" class="form-control" name="duration" placeholder="4 Years">
+            </div>
+            <div class="col-12 mb-3">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" name="description" rows="3"></textarea>
+            </div>
+        </div>
+    </div></div>
+    <div class="mt-3"><button type="submit" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Create Program</button></div>
+</form>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "layouts/hod.html" %}
+{% block title %}Students{% endblock %}
+{% block page_title %}Students{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0"><i class="bi bi-person-badge me-2"></i>Students</h1>
+    <a href="{{ url_for('hod.student_create') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Add Student</a>
+</div>
+
+<form method="GET" class="mb-3">
+    <div class="input-group" style="max-width:360px;">
+        <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Search students...">
+        <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+    </div>
+</form>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light"><tr>
+                    <th>#</th><th>Name</th><th>Roll</th><th>Email</th><th>Batch / Semester</th><th class="text-end">Actions</th>
+                </tr></thead>
+                <tbody>
+                    {% for s in pagination.items %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td class="fw-semibold">{{ s.full_name }}</td>
+                        <td>{{ s.roll_number or '—' }}</td>
+                        <td class="text-muted">{{ s.email }}</td>
+                        <td>{% if s.student_batch %}{{ s.student_batch.label }}{% if s.student_semester %} / {{ s.student_semester.name }}{% endif %}{% else %}—{% endif %}</td>
+                        <td class="text-end">
+                            <a href="{{ url_for('hod.student_edit', student_id=s.id) }}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil-square"></i></a>
+                            <form method="POST" action="{{ url_for('hod.student_delete', student_id=s.id) }}" class="d-inline" onsubmit="return confirm('Delete this student?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not pagination.items %}
+                    <tr><td colspan="6" class="text-center py-4 text-muted"><i class="bi bi-inbox fs-1 d-block mb-2"></i>No students found.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if pagination.pages > 1 %}
+    <div class="card-footer">
+        <nav><ul class="pagination mb-0">
+            {% for p in range(1, pagination.pages + 1) %}
+            <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('hod.students', page=p, search=search) }}">{{ p }}</a>
+            </li>
+            {% endfor %}
+        </ul></nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

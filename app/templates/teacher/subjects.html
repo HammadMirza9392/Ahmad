@@ -1,0 +1,30 @@
+{% extends "layouts/teacher.html" %}
+{% block title %}My Subjects{% endblock %}
+{% block page_title %}My Subjects{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4"><i class="bi bi-book-half me-2"></i>My Subjects</h1>
+
+<div class="card"><div class="card-body p-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light"><tr><th>#</th><th>Subject</th><th>Code</th><th>Department</th><th>Batch / Semester</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+                {% for s in subjects %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td class="fw-semibold">{{ s.name }}</td>
+                    <td>{{ s.code or '—' }}</td>
+                    <td>{{ s.department.name if s.department else '—' }}</td>
+                    <td>{% if s.semester %}{{ s.semester.batch.label if s.semester.batch else '' }} / {{ s.semester.name }}{% else %}<span class="text-muted">Unassigned</span>{% endif %}</td>
+                    <td class="text-end"><a href="{{ url_for('teacher.subject_students', subject_id=s.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-people me-1"></i>Students</a></td>
+                </tr>
+                {% endfor %}
+                {% if not subjects %}
+                <tr><td colspan="6" class="text-center py-4 text-muted"><i class="bi bi-inbox fs-1 d-block mb-2"></i>No subjects assigned.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div></div>
+{% endblock %}

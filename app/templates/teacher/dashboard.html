@@ -1,0 +1,71 @@
+{% extends "layouts/teacher.html" %}
+{% block title %}Teacher Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4"><i class="bi bi-grid-1x2-fill me-2"></i>Dashboard</h1>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4 col-6">
+        <div class="card h-100"><div class="card-body">
+            <div class="text-muted small">Assigned Subjects</div>
+            <div class="h3 mb-0">{{ subjects|length }}</div>
+        </div></div>
+    </div>
+    <div class="col-md-4 col-6">
+        <div class="card h-100"><div class="card-body">
+            <div class="text-muted small">Quizzes</div>
+            <div class="h3 mb-0">{{ quizzes|length }}</div>
+        </div></div>
+    </div>
+    <div class="col-md-4 col-6">
+        <div class="card h-100"><div class="card-body">
+            <div class="text-muted small">Pending Grading</div>
+            <div class="h3 mb-0">{{ grading_queue|length }}</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header"><h5 class="card-title mb-0">My Subjects</h5></div>
+            <div class="card-body p-0">
+                <table class="table table-hover align-middle mb-0">
+                    <tbody>
+                        {% for s in subjects %}
+                        <tr>
+                            <td class="fw-semibold">{{ s.name }}</td>
+                            <td class="text-end"><a href="{{ url_for('teacher.subject_students', subject_id=s.id) }}" class="btn btn-sm btn-outline-primary">Students</a></td>
+                        </tr>
+                        {% endfor %}
+                        {% if not subjects %}
+                        <tr><td class="text-center py-4 text-muted">No subjects assigned yet.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header"><h5 class="card-title mb-0">Grading Queue</h5></div>
+            <div class="card-body p-0">
+                <table class="table table-hover align-middle mb-0">
+                    <tbody>
+                        {% for quiz, attempt in grading_queue %}
+                        <tr>
+                            <td>{{ quiz.title }} — attempt #{{ attempt.attempt_no }}</td>
+                            <td class="text-end"><a href="{{ url_for('teacher.attempt_grade', attempt_id=attempt.id) }}" class="btn btn-sm btn-outline-warning">Grade</a></td>
+                        </tr>
+                        {% endfor %}
+                        {% if not grading_queue %}
+                        <tr><td class="text-center py-4 text-muted">Nothing pending.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
