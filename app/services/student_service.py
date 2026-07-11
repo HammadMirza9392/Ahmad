@@ -6,10 +6,26 @@ import csv
 import io
 from app import db
 from app.models.user import User
+from app.models.enrollment import Enrollment
 from app.services.auth_service import AuthService
 
 
 class StudentService:
+
+    @staticmethod
+    def _coerce_value(field, value):
+        if value is None or value == '':
+            return None
+        if field in {'is_active'}:
+            if isinstance(value, bool):
+                return value
+            return str(value).strip().lower() in {'1', 'true', 'on', 'yes'}
+        if field in {'department_id', 'program_id', 'batch_id', 'semester_id'}:
+            try:
+                return int(value)
+            except (TypeError, ValueError):
+                return None
+        return value
 
     @staticmethod
     def get_all(page=1, per_page=20, search=None, department_id=None, program_id=None,
@@ -54,13 +70,13 @@ class StudentService:
             roll_number=data.get('roll_number'),
             registration_number=data.get('registration_number'),
             phone=data.get('phone'),
-            department_id=data.get('department_id'),
-            program_id=data.get('program_id'),
-            batch_id=data.get('batch_id'),
-            semester_id=data.get('semester_id'),
+            department_id=StudentService._coerce_value('department_id', data.get('department_id')),
+            program_id=StudentService._coerce_value('program_id', data.get('program_id')),
+            batch_id=StudentService._coerce_value('batch_id', data.get('batch_id')),
+            semester_id=StudentService._coerce_value('semester_id', data.get('semester_id')),
             semester=data.get('semester'),
             enrollment_status=data.get('enrollment_status', 'active'),
-            is_active=data.get('is_active', True),
+            is_active=StudentService._coerce_value('is_active', data.get('is_active', True)),
         )
         if user and user.semester_id:
             from app.services.allocation_service import AllocationService
@@ -69,8 +85,12 @@ class StudentService:
 
     @staticmethod
     def update(student, data):
-        """Update student profile fields. Re-allocates subjects if semester changes."""
+        """Update student profile fields and keep academic context coherent."""
+        old_department_id = student.department_id
+        old_program_id = student.program_id
+        old_batch_id = student.batch_id
         old_semester_id = student.semester_id
+
         updatable = [
             'full_name', 'phone', 'roll_number', 'registration_number', 'department_id',
             'program_id', 'batch_id', 'semester_id', 'semester', 'enrollment_status',
@@ -78,7 +98,8 @@ class StudentService:
         ]
         for field in updatable:
             if field in data:
-                setattr(student, field, data[field])
+                setattr(student, field, StudentService._coerce_value(field, data[field]))
+
         if 'email' in data and data['email'] != student.email:
             existing = User.query.filter_by(email=data['email'].lower().strip()).first()
             if existing and existing.id != student.id:
@@ -86,8 +107,45 @@ class StudentService:
             student.email = data['email'].lower().strip()
         if 'password' in data and data['password']:
             student.password_hash = AuthService.hash_password(data['password'])
+
+        if 'department_id' in data:
+            from app.models.program import Program
+            from app.models.batch import Batch
+            from app.models.semester import Semester
+
+            if student.department_id is None:
+                student.program_id = None
+                student.batch_id = None
+                student.semester_id = None
+            elif student.program_id is not None:
+                program = db.session.get(Program, student.program_id)
+                if not program or program.department_id != student.department_id:
+                    student.program_id = None
+                    student.batch_id = None
+                    student.semester_id = None
+
+            if student.batch_id is not None and student.program_id is not None:
+                batch = db.session.get(Batch, student.batch_id)
+                if not batch or batch.program_id != student.program_id:
+                    student.batch_id = None
+                    student.semester_id = None
+
+            if student.semester_id is not None and student.batch_id is not None:
+                semester = db.session.get(Semester, student.semester_id)
+                if not semester or semester.batch_id != student.batch_id:
+                    student.semester_id = None
+
+        context_changed = (
+            old_department_id != student.department_id
+            or old_program_id != student.program_id
+            or old_batch_id != student.batch_id
+            or old_semester_id != student.semester_id
+        )
+        if context_changed:
+            Enrollment.query.filter_by(student_id=student.id).delete()
+
         db.session.commit()
-        if student.semester_id and str(student.semester_id) != str(old_semester_id or ''):
+        if student.semester_id:
             from app.services.allocation_service import AllocationService
             AllocationService.allocate_subjects_for_student(student)
         return student, None

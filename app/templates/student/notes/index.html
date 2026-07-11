@@ -25,11 +25,16 @@
                     </div>
                     <div class="flex-grow-1 min-w-0">
                         <h6 class="fw-semibold mb-1 text-truncate" title="{{ note.title }}">{{ note.title }}</h6>
-                        <small class="text-muted">{{ note.original_name }}</small>
+                        <small class="text-muted">{{ note.material_type|title }}</small>
+                        {% if note.subject %}
+                        <div class="text-muted small mt-1">{{ note.subject.name }}</div>
+                        {% endif %}
                     </div>
                 </div>
-                {% if note.description %}
-                <p class="text-muted small mt-2 mb-0">{{ note.description|truncate(100) }}</p>
+                {% if note.file_url %}
+                <p class="text-muted small mt-3 mb-0">Uploaded study resource</p>
+                {% else %}
+                <p class="text-muted small mt-3 mb-0">Shared with your class</p>
                 {% endif %}
             </div>
             <div class="card-footer bg-transparent border-0 pb-3 px-4 d-flex align-items-center justify-content-between">
@@ -38,9 +43,13 @@
                     <i class="bi bi-calendar me-1"></i>{{ note.created_at.strftime('%b %d, %Y') }}
                     {% endif %}
                 </small>
-                <a href="{{ url_for('student.download_file', dl_id=note.id) }}" class="btn btn-sm btn-primary">
-                    <i class="bi bi-download me-1"></i>Download
+                {% if note.file_url %}
+                <a href="{{ note.file_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-primary">
+                    <i class="bi bi-box-arrow-up-right me-1"></i>Open
                 </a>
+                {% else %}
+                <span class="btn btn-sm btn-outline-secondary disabled">No file</span>
+                {% endif %}
             </div>
         </div>
     </div>

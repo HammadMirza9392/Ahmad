@@ -176,7 +176,7 @@ def student_edit(student_id):
             flash(error, 'danger')
         else:
             flash('Student updated.', 'success')
-            return redirect(url_for('hod.students'))
+            return redirect(url_for('hod.student_edit', student_id=student.id))
     dept_id = _dept_id()
     programs = DepartmentService.get_programs(department_id=dept_id)
     batches = [b for p in programs for b in DepartmentService.get_batches(program_id=p.id)]

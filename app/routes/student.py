@@ -340,9 +340,20 @@ def download_file(dl_id):
 
 @student_bp.route('/notes')
 def notes():
-    pagination = DownloadService.get_all(
+    from sqlalchemy import desc
+
+    from app.models.enrollment import Enrollment
+    from app.models.study_material import StudyMaterial
+
+    query = (
+        StudyMaterial.query.join(Enrollment, Enrollment.subject_id == StudyMaterial.subject_id)
+        .filter(Enrollment.student_id == current_user.id)
+        .order_by(desc(StudyMaterial.created_at))
+    )
+    pagination = query.paginate(
         page=request.args.get('page', 1, type=int),
-        category='notes', department_id=current_user.department_id,
+        per_page=12,
+        error_out=False,
     )
     return render_template('student/notes/index.html', pagination=pagination)
 

@@ -544,7 +544,7 @@ def student_edit(student_id):
             flash(error, 'danger')
         else:
             flash('Student updated.', 'success')
-            return redirect(url_for('admin.students'))
+            return redirect(url_for('admin.student_edit', student_id=student.id))
     depts = DepartmentService.get_all()
     return render_template('admin/students/edit.html', student=student, departments=depts)
 

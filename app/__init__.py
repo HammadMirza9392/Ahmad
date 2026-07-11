@@ -123,11 +123,10 @@ def _ensure_tables(app):
     import app.models.institution
     import app.models.department
     import app.models.program
-    import app.models.classes
     import app.models.batch
     import app.models.semester
-    import app.models.subject
     import app.models.knowledge_base
+    import app.models.subject
     import app.models.ai_settings
     import app.models.chat
     import app.models.analytics
@@ -146,8 +145,19 @@ def _ensure_tables(app):
     import app.models.announcement
     import app.models.assignment
     db.create_all()
+    _drop_legacy_class_tables()
     _ensure_new_columns()
-    _migrate_class_to_batch_semester()
+
+
+def _drop_legacy_class_tables():
+    """Remove legacy class tables from the database if they still exist."""
+    from sqlalchemy import text
+    try:
+        with db.engine.begin() as conn:
+            conn.execute(text('DROP TABLE IF EXISTS class_subjects'))
+            conn.execute(text('DROP TABLE IF EXISTS classes'))
+    except Exception:
+        db.session.rollback()
 
 
 def _ensure_new_columns():
@@ -187,120 +197,3 @@ def _ensure_new_columns():
         db.session.rollback()
 
 
-def _migrate_class_to_batch_semester():
-    """One-time data migration: old flat Class model -> Batch/Semester hierarchy.
-
-    Best-effort and non-destructive:
-    - Old `classes` / `class_subjects` tables are left untouched in the DB
-      (nothing drops them); code simply stops reading from them after this runs.
-    - For every Program, creates ONE Batch (best-effort inference: no reliable
-      start/end year existed on the old Class model, so start_year/end_year are
-      left NULL for the admin to fill in manually; status defaults to 'active').
-    - For every Class under that program, creates a corresponding Semester under
-      the new Batch, trying to parse a leading integer out of the class's
-      year/name for `number`, else falling back to sequential 1, 2, 3...
-    - Subjects linked to a class via the old ClassSubject bridge get
-      `semester_id` set to the first linked semester. If a subject had multiple
-      class links (possible, if unlikely, under the old schema), a warning is
-      printed since the new schema only supports one semester per subject.
-    - Students with a class_id get batch_id/semester_id set from the mapping.
-
-    Guarded to run once: skips entirely if any Batch rows already exist.
-    Wrapped in try/except so a migration failure never blocks app startup.
-    """
-    import re
-    from sqlalchemy import text
-    from app.models.program import Program
-    from app.models.batch import Batch
-    from app.models.semester import Semester
-    from app.models.classes import Class, ClassSubject
-    from app.models.subject import Subject
-    from app.models.user import User
-
-    try:
-        if Batch.query.first() is not None:
-            return  # already migrated (or fresh install with no legacy data)
-
-        old_classes = Class.query.all()
-        if not old_classes:
-            return  # nothing to migrate
-
-        class_to_semester = {}  # old Class.id -> new Semester
-
-        for program in Program.query.all():
-            program_classes = [c for c in old_classes if c.program_id == program.id]
-            if not program_classes:
-                continue
-
-            batch = Batch(
-                name=f'{program.name} Batch',
-                slug=f'{program.slug}-batch-1',
-                start_year=None,  # best-effort: old schema had no reliable start year
-                end_year=None,
-                status='active',
-                program_id=program.id,
-                is_active=True,
-            )
-            db.session.add(batch)
-            db.session.flush()
-
-            for idx, cls in enumerate(sorted(program_classes, key=lambda c: c.sort_order or 0), start=1):
-                number = None
-                for source in (cls.year, cls.name):
-                    if source:
-                        match = re.search(r'\d+', source)
-                        if match:
-                            number = int(match.group())
-                            break
-                if number is None:
-                    number = idx
-
-                semester = Semester(
-                    name=cls.name,
-                    slug=cls.slug or f'{batch.slug}-sem-{idx}',
-                    number=number,
-                    batch_id=batch.id,
-                    is_active=cls.is_active,
-                    sort_order=cls.sort_order or 0,
-                )
-                db.session.add(semester)
-                db.session.flush()
-                class_to_semester[cls.id] = semester
-
-        db.session.commit()
-
-        # Migrate ClassSubject bridge -> Subject.semester_id (first link wins)
-        subject_class_counts = {}
-        for cs in ClassSubject.query.all():
-            subject_class_counts.setdefault(cs.subject_id, []).append(cs.class_id)
-
-        for subject_id, class_ids in subject_class_counts.items():
-            if len(class_ids) > 1:
-                print(f'[migration] WARNING: Subject {subject_id} was linked to multiple '
-                      f'classes ({class_ids}); migrated to the first one only. Please review manually.')
-            first_class_id = class_ids[0]
-            semester = class_to_semester.get(first_class_id)
-            if semester:
-                subject = db.session.get(Subject, subject_id)
-                if subject and not subject.semester_id:
-                    subject.semester_id = semester.id
-
-        # Migrate students. User.class_id is no longer a mapped attribute (the
-        # model dropped it in favor of batch_id/semester_id), but the raw column
-        # still exists in the DB, so read it with raw SQL rather than the ORM.
-        rows = db.session.execute(text('SELECT id, class_id FROM users WHERE class_id IS NOT NULL')).fetchall()
-        for row in rows:
-            semester = class_to_semester.get(row.class_id)
-            if semester:
-                user = db.session.get(User, row.id)
-                if user:
-                    user.batch_id = semester.batch_id
-                    user.semester_id = semester.id
-
-        db.session.commit()
-        print(f'[migration] Migrated {len(class_to_semester)} classes into batches/semesters.')
-
-    except Exception as e:
-        db.session.rollback()
-        import logging
-        logging.getLogger(__name__).warning(f'Class->Batch/Semester migration failed (non-fatal): {e}')

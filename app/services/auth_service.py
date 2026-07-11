@@ -43,10 +43,22 @@ class AuthService:
     @staticmethod
     def create_user(email, password, full_name, role='student', **kwargs):
         """Create a new user account. Returns (user, error_message)."""
-        if User.query.filter_by(email=email.lower().strip()).first():
+        normalized_email = email.lower().strip()
+        if User.query.filter_by(email=normalized_email).first():
             return None, 'An account with this email already exists.'
+
+        if 'is_active' in kwargs and isinstance(kwargs['is_active'], str):
+            kwargs['is_active'] = kwargs['is_active'].strip().lower() in {'1', 'true', 'on', 'yes'}
+
+        for field in ('department_id', 'program_id', 'batch_id', 'semester_id'):
+            if field in kwargs and kwargs[field] not in (None, ''):
+                try:
+                    kwargs[field] = int(kwargs[field])
+                except (TypeError, ValueError):
+                    kwargs[field] = None
+
         user = User(
-            email=email.lower().strip(),
+            email=normalized_email,
             password_hash=AuthService.hash_password(password),
             full_name=full_name,
             role=role,

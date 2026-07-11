@@ -180,8 +180,10 @@ def materials():
         flash('Study material added.', 'success')
         return redirect(url_for('teacher.materials'))
     subject_ids = [s.id for s in subjects]
-    material_list = (StudyMaterial.query.filter(StudyMaterial.subject_id.in_(subject_ids))
-                     .order_by(StudyMaterial.created_at.desc()).all() if subject_ids else [])
+    query = StudyMaterial.query.filter_by(teacher_id=current_user.id)
+    if subject_ids:
+        query = query.filter(StudyMaterial.subject_id.in_(subject_ids))
+    material_list = query.order_by(StudyMaterial.created_at.desc()).all()
     return render_template('teacher/materials.html', subjects=subjects, materials=material_list)
 
 
