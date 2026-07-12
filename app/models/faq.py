@@ -14,7 +14,7 @@ class FAQ(db.Model):
     answer = db.Column(db.Text, nullable=False)
     category = db.Column(db.String(100))
 
-    department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
+    department_id = db.Column(db.Integer, db.ForeignKey('departments.id', ondelete='SET NULL'))
 
     is_active = db.Column(db.Boolean, default=True)
     sort_order = db.Column(db.Integer, default=0)

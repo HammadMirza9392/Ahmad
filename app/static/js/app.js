@@ -99,7 +99,10 @@ function renderSearchResults(data) {
 }
 
 // ── Dynamic Dependent Dropdowns (Department → Program → Batch → Semester) ──
-function loadPrograms(departmentId, targetSelect, callback) {
+// `selectedId` re-marks the option matching the model's current stored value
+// as selected — needed on edit forms where the field is pre-populated on
+// page load, not just after a user `change` event.
+function loadPrograms(departmentId, targetSelect, callback, selectedId) {
     if (!departmentId) {
         targetSelect.innerHTML = '<option value="">-- Select Program --</option>';
         if (callback) callback();
@@ -110,14 +113,15 @@ function loadPrograms(departmentId, targetSelect, callback) {
         .then(data => {
             let html = '<option value="">-- Select Program --</option>';
             data.forEach(p => {
-                html += `<option value="${p.id}">${p.name}</option>`;
+                const isSelected = selectedId != null && String(p.id) === String(selectedId);
+                html += `<option value="${p.id}" ${isSelected ? 'selected' : ''}>${p.name}</option>`;
             });
             targetSelect.innerHTML = html;
             if (callback) callback();
         });
 }
 
-function loadBatches(programId, targetSelect, callback) {
+function loadBatches(programId, targetSelect, callback, selectedId) {
     if (!programId) {
         targetSelect.innerHTML = '<option value="">-- Select Batch --</option>';
         if (callback) callback();
@@ -128,14 +132,15 @@ function loadBatches(programId, targetSelect, callback) {
         .then(data => {
             let html = '<option value="">-- Select Batch --</option>';
             data.forEach(b => {
-                html += `<option value="${b.id}">${b.name}</option>`;
+                const isSelected = selectedId != null && String(b.id) === String(selectedId);
+                html += `<option value="${b.id}" ${isSelected ? 'selected' : ''}>${b.name}</option>`;
             });
             targetSelect.innerHTML = html;
             if (callback) callback();
         });
 }
 
-function loadSemesters(batchId, targetSelect, callback) {
+function loadSemesters(batchId, targetSelect, callback, selectedId) {
     if (!batchId) {
         targetSelect.innerHTML = '<option value="">-- Select Semester --</option>';
         if (callback) callback();
@@ -146,14 +151,15 @@ function loadSemesters(batchId, targetSelect, callback) {
         .then(data => {
             let html = '<option value="">-- Select Semester --</option>';
             data.forEach(s => {
-                html += `<option value="${s.id}">${s.name}</option>`;
+                const isSelected = selectedId != null && String(s.id) === String(selectedId);
+                html += `<option value="${s.id}" ${isSelected ? 'selected' : ''}>${s.name}</option>`;
             });
             targetSelect.innerHTML = html;
             if (callback) callback();
         });
 }
 
-function loadSubjects(departmentId, targetSelect) {
+function loadSubjects(departmentId, targetSelect, selectedId) {
     if (!departmentId) {
         targetSelect.innerHTML = '<option value="">-- Select Subject --</option>';
         return;
@@ -163,7 +169,8 @@ function loadSubjects(departmentId, targetSelect) {
         .then(data => {
             let html = '<option value="">-- Select Subject --</option>';
             data.forEach(s => {
-                html += `<option value="${s.id}">${s.name}</option>`;
+                const isSelected = selectedId != null && String(s.id) === String(selectedId);
+                html += `<option value="${s.id}" ${isSelected ? 'selected' : ''}>${s.name}</option>`;
             });
             targetSelect.innerHTML = html;
         });

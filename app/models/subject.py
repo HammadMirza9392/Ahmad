@@ -16,11 +16,11 @@ class Subject(db.Model):
     description = db.Column(db.Text)
     credit_hours = db.Column(db.Integer)
 
-    department_id = db.Column(db.Integer, db.ForeignKey('departments.id'), nullable=False)
-    semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id'), nullable=True)
+    department_id = db.Column(db.Integer, db.ForeignKey('departments.id', ondelete='CASCADE'), nullable=False)
+    semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id', ondelete='CASCADE'), nullable=True)
     # Single teacher per subject kept intentionally (see migration notes) —
     # multi-teacher support was explicitly optional in the spec.
-    teacher_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
 
     is_active = db.Column(db.Boolean, default=True)
     sort_order = db.Column(db.Integer, default=0)
@@ -29,7 +29,8 @@ class Subject(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    knowledge_entries = db.relationship('KnowledgeBase', backref='subject', lazy='dynamic')
+    knowledge_entries = db.relationship('KnowledgeBase', backref='subject', lazy='dynamic',
+                                        cascade='all, delete-orphan')
     teacher = db.relationship('User', foreign_keys=[teacher_id], backref='taught_subjects')
 
     def __repr__(self):

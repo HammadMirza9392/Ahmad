@@ -145,19 +145,51 @@
 {% block scripts %}
 {{ super() }}
 <script>
-document.getElementById('department_id').addEventListener('change', function () {
-    loadPrograms(this.value, document.getElementById('program_id'), function () {
-        document.getElementById('batch_id').innerHTML = '<option value="">-- Select Batch --</option>';
-        document.getElementById('semester_id').innerHTML = '<option value="">-- Select Semester --</option>';
+const departmentSelect = document.getElementById('department_id');
+const programSelect = document.getElementById('program_id');
+const batchSelect = document.getElementById('batch_id');
+const semesterSelect = document.getElementById('semester_id');
+
+{% if subj.semester and subj.semester.batch and subj.semester.batch.program %}
+const currentProgramId = {{ subj.semester.batch.program.id }};
+{% else %}
+const currentProgramId = null;
+{% endif %}
+{% if subj.semester and subj.semester.batch %}
+const currentBatchId = {{ subj.semester.batch.id }};
+{% else %}
+const currentBatchId = null;
+{% endif %}
+const currentSemesterId = {{ subj.semester_id or 'null' }};
+
+departmentSelect.addEventListener('change', function () {
+    loadPrograms(this.value, programSelect, function () {
+        batchSelect.innerHTML = '<option value="">-- Select Batch --</option>';
+        semesterSelect.innerHTML = '<option value="">-- Select Semester --</option>';
     });
 });
-document.getElementById('program_id').addEventListener('change', function () {
-    loadBatches(this.value, document.getElementById('batch_id'), function () {
-        document.getElementById('semester_id').innerHTML = '<option value="">-- Select Semester --</option>';
+programSelect.addEventListener('change', function () {
+    loadBatches(this.value, batchSelect, function () {
+        semesterSelect.innerHTML = '<option value="">-- Select Semester --</option>';
     });
 });
-document.getElementById('batch_id').addEventListener('change', function () {
-    loadSemesters(this.value, document.getElementById('semester_id'));
+batchSelect.addEventListener('change', function () {
+    loadSemesters(this.value, semesterSelect);
 });
+
+// On load, populate every dropdown beneath an already-selected department/
+// program/batch with its full option list, preserving the subject's current
+// academic placement instead of leaving downstream selects empty.
+if (departmentSelect.value) {
+    loadPrograms(departmentSelect.value, programSelect, function () {
+        if (programSelect.value) {
+            loadBatches(programSelect.value, batchSelect, function () {
+                if (batchSelect.value) {
+                    loadSemesters(batchSelect.value, semesterSelect, null, currentSemesterId);
+                }
+            }, currentBatchId);
+        }
+    }, currentProgramId);
+}
 </script>
 {% endblock %}

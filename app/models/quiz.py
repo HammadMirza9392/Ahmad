@@ -11,8 +11,8 @@ class Quiz(db.Model):
     __tablename__ = 'quizzes'
 
     id = db.Column(db.Integer, primary_key=True)
-    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
-    teacher_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id', ondelete='CASCADE'), nullable=False)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text)
     total_marks = db.Column(db.Integer, default=0)
@@ -22,8 +22,8 @@ class Quiz(db.Model):
     end_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    subject = db.relationship('Subject', backref='quizzes')
-    teacher = db.relationship('User', backref='quizzes')
+    subject = db.relationship('Subject', backref=db.backref('quizzes', cascade='all, delete-orphan'))
+    teacher = db.relationship('User', backref=db.backref('quizzes', cascade='all, delete-orphan'))
     questions = db.relationship('QuizQuestion', backref='quiz', lazy=True,
                                 cascade='all, delete-orphan', order_by='QuizQuestion.sort_order')
     attempts = db.relationship('QuizAttempt', backref='quiz', lazy=True, cascade='all, delete-orphan')
@@ -49,7 +49,7 @@ class QuizQuestion(db.Model):
     __tablename__ = 'quiz_questions'
 
     id = db.Column(db.Integer, primary_key=True)
-    quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id', ondelete='CASCADE'), nullable=False)
     type = db.Column(db.String(20), default='mcq')  # mcq, true_false, short_answer
     text = db.Column(db.Text, nullable=False)
     options_json = db.Column(db.Text)  # JSON list of options for MCQ
@@ -76,15 +76,15 @@ class QuizAttempt(db.Model):
     __tablename__ = 'quiz_attempts'
 
     id = db.Column(db.Integer, primary_key=True)
-    quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
-    student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id', ondelete='CASCADE'), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     attempt_no = db.Column(db.Integer, default=1)
     started_at = db.Column(db.DateTime, default=datetime.utcnow)
     submitted_at = db.Column(db.DateTime, nullable=True)
     score = db.Column(db.Float, nullable=True)
     status = db.Column(db.String(20), default='in_progress')  # in_progress, submitted, graded
 
-    student = db.relationship('User', backref='quiz_attempts')
+    student = db.relationship('User', backref=db.backref('quiz_attempts', cascade='all, delete-orphan'))
     answers = db.relationship('QuizAnswer', backref='attempt', lazy=True, cascade='all, delete-orphan')
 
     def __repr__(self):
@@ -95,8 +95,8 @@ class QuizAnswer(db.Model):
     __tablename__ = 'quiz_answers'
 
     id = db.Column(db.Integer, primary_key=True)
-    attempt_id = db.Column(db.Integer, db.ForeignKey('quiz_attempts.id'), nullable=False)
-    question_id = db.Column(db.Integer, db.ForeignKey('quiz_questions.id'), nullable=False)
+    attempt_id = db.Column(db.Integer, db.ForeignKey('quiz_attempts.id', ondelete='CASCADE'), nullable=False)
+    question_id = db.Column(db.Integer, db.ForeignKey('quiz_questions.id', ondelete='CASCADE'), nullable=False)
     answer_text = db.Column(db.Text)
     is_correct = db.Column(db.Boolean, nullable=True)  # None => pending manual grading
     marks_awarded = db.Column(db.Float, nullable=True)

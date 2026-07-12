@@ -10,8 +10,8 @@ class Assignment(db.Model):
     __tablename__ = 'assignments'
 
     id = db.Column(db.Integer, primary_key=True)
-    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
-    teacher_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id', ondelete='CASCADE'), nullable=False)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
 
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text)
@@ -22,8 +22,8 @@ class Assignment(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    subject = db.relationship('Subject', backref='assignments')
-    teacher = db.relationship('User', backref='assignments')
+    subject = db.relationship('Subject', backref=db.backref('assignments', cascade='all, delete-orphan'))
+    teacher = db.relationship('User', backref=db.backref('assignments', cascade='all, delete-orphan'))
     submissions = db.relationship('AssignmentSubmission', backref='assignment', lazy=True,
                                   cascade='all, delete-orphan')
 
@@ -39,8 +39,8 @@ class AssignmentSubmission(db.Model):
     __tablename__ = 'assignment_submissions'
 
     id = db.Column(db.Integer, primary_key=True)
-    assignment_id = db.Column(db.Integer, db.ForeignKey('assignments.id'), nullable=False)
-    student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    assignment_id = db.Column(db.Integer, db.ForeignKey('assignments.id', ondelete='CASCADE'), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
 
     file_url = db.Column(db.String(500), nullable=False)
     submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -49,7 +49,7 @@ class AssignmentSubmission(db.Model):
     feedback = db.Column(db.Text)
     graded_at = db.Column(db.DateTime)
 
-    student = db.relationship('User', backref='assignment_submissions')
+    student = db.relationship('User', backref=db.backref('assignment_submissions', cascade='all, delete-orphan'))
 
     __table_args__ = (
         db.UniqueConstraint('assignment_id', 'student_id', name='uq_assignment_student'),

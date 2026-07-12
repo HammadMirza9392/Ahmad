@@ -175,6 +175,36 @@ class KnowledgeService:
         return '\n\n'.join(context_parts), resource_files
 
     @staticmethod
+    def get_context_for_subjects(subject_ids):
+        """Retrieve published knowledge entries scoped to a specific set of
+        subjects (used for teacher chat, where a teacher's subjects can span
+        different departments/semesters — unlike a student's single fixed
+        academic context)."""
+        if not subject_ids:
+            return '', []
+
+        entries = (KnowledgeBase.query
+                   .filter_by(status='published')
+                   .filter(KnowledgeBase.subject_id.in_(subject_ids))
+                   .all())
+
+        context_parts = []
+        resource_files = []
+        for entry in entries:
+            context_parts.append(f"### {entry.title}\n{entry.content}")
+            for f in entry.files:
+                if f.extracted_text:
+                    context_parts.append(f"[File: {f.original_name}]\n{f.extracted_text}")
+                resource_files.append({
+                    'id': f.id,
+                    'name': f.original_name,
+                    'type': f.file_type,
+                    'filename': f.filename,
+                })
+
+        return '\n\n'.join(context_parts), resource_files
+
+    @staticmethod
     def _save_version(kb, user_id):
         """Snapshot current state before modification."""
         v = KnowledgeVersion(

@@ -24,7 +24,7 @@ class ThemeSettings(db.Model):
     font_body = db.Column(db.String(100), default='Inter')
     mode = db.Column(db.String(10), default='light')  # light, dark, auto
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    updated_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    updated_by = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
 
     def __repr__(self):
         return f'<ThemeSettings {self.id}>'

@@ -11,9 +11,9 @@ class AnalyticsEvent(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     event_type = db.Column(db.String(100), nullable=False, index=True)  # chat, login, download, search, quiz
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), index=True)
-    department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
-    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), index=True)
+    department_id = db.Column(db.Integer, db.ForeignKey('departments.id', ondelete='SET NULL'))
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id', ondelete='SET NULL'))
 
     # Event data stored as JSON text
     event_data = db.Column(db.Text)
@@ -39,8 +39,8 @@ class TrendingQuestion(db.Model):
     question_text = db.Column(db.String(1000), nullable=False)
     normalized_text = db.Column(db.String(1000), index=True)
     count = db.Column(db.Integer, default=1)
-    department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
-    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'))
+    department_id = db.Column(db.Integer, db.ForeignKey('departments.id', ondelete='SET NULL'))
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id', ondelete='SET NULL'))
     last_asked = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):

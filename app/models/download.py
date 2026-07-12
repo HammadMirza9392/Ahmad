@@ -22,17 +22,17 @@ class Download(db.Model):
     file_size = db.Column(db.Integer)
 
     # Categorization
-    department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
-    program_id = db.Column(db.Integer, db.ForeignKey('programs.id'))
-    batch_id = db.Column(db.Integer, db.ForeignKey('batches.id'))
-    semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id'))
-    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'))
+    department_id = db.Column(db.Integer, db.ForeignKey('departments.id', ondelete='SET NULL'))
+    program_id = db.Column(db.Integer, db.ForeignKey('programs.id', ondelete='SET NULL'))
+    batch_id = db.Column(db.Integer, db.ForeignKey('batches.id', ondelete='SET NULL'))
+    semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id', ondelete='SET NULL'))
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id', ondelete='SET NULL'))
 
     download_count = db.Column(db.Integer, default=0)
     is_active = db.Column(db.Boolean, default=True)
     sort_order = db.Column(db.Integer, default=0)
 
-    uploaded_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+    uploaded_by = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

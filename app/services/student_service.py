@@ -8,6 +8,7 @@ from app import db
 from app.models.user import User
 from app.models.enrollment import Enrollment
 from app.services.auth_service import AuthService
+from app.utils.cascade import cascade_delete_users
 
 
 class StudentService:
@@ -152,7 +153,9 @@ class StudentService:
 
     @staticmethod
     def delete(student):
-        db.session.delete(student)
+        """Delete a student and their dependent records: enrollments,
+        assignment submissions, quiz attempts, chat sessions, notifications."""
+        cascade_delete_users(User.query.filter_by(id=student.id))
         db.session.commit()
 
     @staticmethod

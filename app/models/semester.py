@@ -17,7 +17,7 @@ class Semester(db.Model):
     start_date = db.Column(db.Date)
     end_date = db.Column(db.Date)
 
-    batch_id = db.Column(db.Integer, db.ForeignKey('batches.id'), nullable=False)
+    batch_id = db.Column(db.Integer, db.ForeignKey('batches.id', ondelete='CASCADE'), nullable=False)
 
     is_active = db.Column(db.Boolean, default=True)
     sort_order = db.Column(db.Integer, default=0)
@@ -26,6 +26,10 @@ class Semester(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
+    # NOTE: no ORM-level delete-orphan cascade — subjects can be reassigned to a different semester
+    # (see DepartmentService.update_subject), and delete-orphan would delete the Subject the moment
+    # it's disassociated from its current semester. Deleting the semester itself is instead handled
+    # at the DB level via subjects.semester_id's ondelete='CASCADE'.
     subjects = db.relationship('Subject', backref='semester', lazy=True)
 
     @property

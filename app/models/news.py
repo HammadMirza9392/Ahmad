@@ -17,13 +17,13 @@ class News(db.Model):
     image = db.Column(db.String(500))
 
     category = db.Column(db.String(100))
-    department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
+    department_id = db.Column(db.Integer, db.ForeignKey('departments.id', ondelete='SET NULL'))
 
     is_published = db.Column(db.Boolean, default=True)
     is_featured = db.Column(db.Boolean, default=False)
     views = db.Column(db.Integer, default=0)
 
-    created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
     published_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

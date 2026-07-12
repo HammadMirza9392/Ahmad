@@ -86,6 +86,22 @@ def public_chat():
                 ip_address=request.remote_addr,
                 user_agent=request.user_agent.string,
             )
+        elif current_user.is_authenticated and current_user.role == 'teacher':
+            from app.ai.context_manager import ContextManager
+            from app.services.chat_service import ChatService
+
+            session = ChatService.create_session(
+                user_id=current_user.id,
+                title='Quick Chat',
+                department_id=current_user.department_id,
+            )
+            response_text, _ = ContextManager.process_teacher_message(
+                user=current_user,
+                session_id=session.id,
+                user_message=message,
+                ip_address=request.remote_addr,
+                user_agent=request.user_agent.string,
+            )
         else:
             system_prompt = f"""You are a helpful AI assistant for {inst_name}.
 Answer general questions about admissions, programs, departments, campus, fees, and facilities.

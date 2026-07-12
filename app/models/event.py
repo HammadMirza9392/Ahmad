@@ -20,12 +20,12 @@ class Event(db.Model):
     event_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
 
-    department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
+    department_id = db.Column(db.Integer, db.ForeignKey('departments.id', ondelete='SET NULL'))
 
     is_active = db.Column(db.Boolean, default=True)
     is_featured = db.Column(db.Boolean, default=False)
 
-    created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

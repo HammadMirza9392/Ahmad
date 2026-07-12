@@ -10,6 +10,10 @@ from app.models.batch import Batch
 from app.models.semester import Semester
 from app.models.subject import Subject
 from app.utils.helpers import generate_slug
+from app.utils.cascade import (
+    cascade_delete_departments, cascade_delete_programs, cascade_delete_batches,
+    cascade_delete_semesters, cascade_delete_subjects,
+)
 
 # Columns that need type coercion when assigned from raw form data (always strings).
 _BOOLEAN_FIELDS = {'is_active'}
@@ -113,7 +117,10 @@ class DepartmentService:
 
     @staticmethod
     def delete(dept):
-        db.session.delete(dept)
+        """Delete a department and every dependent record beneath it:
+        programs, batches, semesters, subjects, students/teachers scoped to
+        it, and knowledge base entries."""
+        cascade_delete_departments(Department.query.filter_by(id=dept.id))
         db.session.commit()
 
     # ───────────── PROGRAMS ─────────────
@@ -160,7 +167,9 @@ class DepartmentService:
 
     @staticmethod
     def delete_program(prog):
-        db.session.delete(prog)
+        """Delete a program and everything beneath it: batches, semesters,
+        subjects, students/teachers scoped to it, and knowledge base entries."""
+        cascade_delete_programs(Program.query.filter_by(id=prog.id))
         db.session.commit()
 
     # ───────────── BATCHES ─────────────
@@ -206,7 +215,9 @@ class DepartmentService:
 
     @staticmethod
     def delete_batch(batch):
-        db.session.delete(batch)
+        """Delete a batch and everything beneath it: semesters, subjects,
+        students scoped to it, and knowledge base entries."""
+        cascade_delete_batches(Batch.query.filter_by(id=batch.id))
         db.session.commit()
 
     # ───────────── SEMESTERS ─────────────
@@ -249,7 +260,9 @@ class DepartmentService:
 
     @staticmethod
     def delete_semester(sem):
-        db.session.delete(sem)
+        """Delete a semester and everything beneath it: subjects, students
+        scoped to it, and knowledge base entries."""
+        cascade_delete_semesters(Semester.query.filter_by(id=sem.id))
         db.session.commit()
 
     @staticmethod
@@ -310,7 +323,10 @@ class DepartmentService:
 
     @staticmethod
     def delete_subject(subj):
-        db.session.delete(subj)
+        """Delete a subject and its dependents: enrollments, study
+        materials, assignments, quizzes, and knowledge base entries.
+        Leaves the assigned teacher's account untouched."""
+        cascade_delete_subjects(Subject.query.filter_by(id=subj.id))
         db.session.commit()
 
     @staticmethod

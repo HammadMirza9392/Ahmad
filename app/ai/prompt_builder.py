@@ -92,6 +92,94 @@ IMPORTANT RULES:
         return prompt
 
     @staticmethod
+    def build_teacher_system_prompt(user, subjects, students_by_subject, knowledge_context='',
+                                     resource_files=None, custom_prompt=None, quizzes=None):
+        """Build the system prompt for a teacher's AI chat. Unlike the student
+        prompt, there is no single fixed academic scope — a teacher's scope is
+        exactly the list of Subjects assigned to them (Subject.teacher_id ==
+        user.id) and the students enrolled in those subjects. The prompt
+        embeds only that pre-fetched, server-scoped data and explicitly
+        forbids answering about anything outside it, since the AI has no
+        ability to query the database itself.
+        """
+        institution = Institution.query.first()
+        inst_name = institution.name if institution else 'the institution'
+
+        try:
+            dept_name = user.department.name if user.department else 'N/A'
+        except Exception:
+            dept_name = 'N/A'
+
+        subjects_block = 'None assigned yet.'
+        if subjects:
+            lines = []
+            for s in subjects:
+                dept = s.department.name if s.department else 'N/A'
+                sem = s.semester.name if s.semester else 'N/A'
+                roster = students_by_subject.get(s.id, [])
+                lines.append(f'- "{s.name}" (code: {s.code or "N/A"}, department: {dept}, '
+                            f'semester: {sem}) — {len(roster)} student(s) enrolled')
+            subjects_block = '\n'.join(lines)
+
+        students_block = 'No students enrolled in any of your subjects yet.'
+        all_rows = []
+        for s in subjects or []:
+            for student in students_by_subject.get(s.id, []):
+                roll = student.roll_number or 'N/A'
+                all_rows.append(f'- {student.full_name} (roll: {roll}, email: {student.email}) — enrolled in "{s.name}"')
+        if all_rows:
+            students_block = '\n'.join(all_rows)
+
+        prompt = f"""You are an AI Teaching Assistant for {inst_name}.
+
+Teacher Information:
+- Name: {user.full_name}
+- Department: {dept_name}
+
+YOUR ASSIGNED SUBJECTS:
+{subjects_block}
+
+YOUR STUDENTS (across your assigned subjects only):
+{students_block}
+
+IMPORTANT RULES:
+1. You may only answer questions about the subjects and students listed above — these are
+   exactly and only the subjects this teacher is assigned to teach (Subject.teacher_id match)
+   and the students enrolled in those subjects.
+2. If asked about a subject not listed above, or a student not listed above, reply that you
+   don't have access to that data and it is outside the subjects assigned to this teacher.
+   Never guess, infer, or fabricate details about subjects/students that are not in the lists
+   above, even if the teacher names them directly.
+3. If asked to "list the students" for a specific subject, use the students listed under that
+   exact subject above.
+4. Use the knowledge base below (if present) to help answer content questions about your
+   subjects. If the answer is not available there, say so plainly.
+5. Be helpful, accurate, and concise. Format responses with clear headings, bullet points, and
+   code blocks where appropriate.
+"""
+
+        if custom_prompt:
+            prompt += f"\nAdditional Instructions:\n{custom_prompt}\n"
+
+        if knowledge_context:
+            prompt += f"\n--- KNOWLEDGE BASE (your subjects only) ---\n{knowledge_context}\n--- END KNOWLEDGE BASE ---\n"
+
+        if resource_files:
+            prompt += "\n--- AVAILABLE RESOURCES ---\n"
+            for f in resource_files:
+                prompt += f"- {f['name']} (Type: {f['type']}, File: {f['filename']})\n"
+            prompt += "--- END RESOURCES ---\n"
+
+        if quizzes:
+            prompt += "\n--- YOUR QUIZZES ---\n"
+            for q in quizzes:
+                subj_name = q.subject.name if q.subject else 'Unknown Subject'
+                prompt += f"- \"{q.title}\" ({subj_name}) — {len(q.attempts)} attempt(s)\n"
+            prompt += "--- END QUIZZES ---\n"
+
+        return prompt
+
+    @staticmethod
     def build_title_prompt(user_message):
         """Generate a short chat session title from the first user message."""
         return f'Generate a concise title (max 6 words) for a chat that starts with: "{user_message[:200]}". Reply with only the title, nothing else.'

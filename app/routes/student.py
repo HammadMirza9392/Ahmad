@@ -105,6 +105,8 @@ def chat_send():
 
     if not session_id or not message:
         return jsonify({'error': 'Missing session or message'}), 400
+    if not ChatService.get_session(session_id, current_user.id):
+        return jsonify({'error': 'Chat session not found'}), 404
 
     try:
         user = _load_user_for_ai()
@@ -131,6 +133,8 @@ def chat_stream():
 
     if not session_id or not message:
         return jsonify({'error': 'Missing data'}), 400
+    if not ChatService.get_session(session_id, current_user.id):
+        return jsonify({'error': 'Chat session not found'}), 404
 
     # Eagerly load user + relationships before generator starts
     user = _load_user_for_ai()
@@ -180,7 +184,7 @@ def chat_delete(session_id):
 @student_bp.route('/chat/feedback', methods=['POST'])
 def chat_feedback():
     data = request.get_json()
-    ChatService.feedback_message(data.get('message_id'), data.get('is_liked'))
+    ChatService.feedback_message(data.get('message_id'), data.get('is_liked'), user_id=current_user.id)
     return jsonify({'status': 'ok'})
 
 

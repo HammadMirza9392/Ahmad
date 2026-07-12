@@ -10,15 +10,15 @@ class ChatSession(db.Model):
     __tablename__ = 'chat_sessions'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
     title = db.Column(db.String(500), default='New Chat')
 
-    # Context snapshot at session creation
-    department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
-    program_id = db.Column(db.Integer, db.ForeignKey('programs.id'))
-    batch_id = db.Column(db.Integer, db.ForeignKey('batches.id'))
-    semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id'))
-    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'))
+    # Context snapshot at session creation (kept for history even if the scope is later deleted)
+    department_id = db.Column(db.Integer, db.ForeignKey('departments.id', ondelete='SET NULL'))
+    program_id = db.Column(db.Integer, db.ForeignKey('programs.id', ondelete='SET NULL'))
+    batch_id = db.Column(db.Integer, db.ForeignKey('batches.id', ondelete='SET NULL'))
+    semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id', ondelete='SET NULL'))
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id', ondelete='SET NULL'))
 
     is_bookmarked = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
@@ -38,7 +38,7 @@ class ChatMessage(db.Model):
     __tablename__ = 'chat_messages'
 
     id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.Integer, db.ForeignKey('chat_sessions.id'), nullable=False, index=True)
+    session_id = db.Column(db.Integer, db.ForeignKey('chat_sessions.id', ondelete='CASCADE'), nullable=False, index=True)
     role = db.Column(db.String(20), nullable=False)  # user, assistant
     content = db.Column(db.Text, nullable=False)
 

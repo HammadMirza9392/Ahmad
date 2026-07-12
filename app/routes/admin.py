@@ -6,7 +6,6 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 
 from app import db
-from app.models.subject import Subject
 from app.utils.decorators import admin_required, super_admin_required
 from app.controllers.admin_controller import AdminController
 from app.services.department_service import DepartmentService
@@ -19,6 +18,7 @@ from app.services.cms_service import CMSService
 from app.services.chat_service import ChatService
 from app.services.analytics_service import AnalyticsService
 from app.utils.file_handler import save_upload
+from app.utils.cascade import cascade_delete_users
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -452,8 +452,7 @@ def teacher_delete(teacher_id):
     from app.models.user import User
     teacher = db.session.get(User, teacher_id)
     if teacher and teacher.role == 'teacher':
-        Subject.query.filter_by(teacher_id=teacher.id).update({'teacher_id': None})
-        db.session.delete(teacher)
+        cascade_delete_users(User.query.filter_by(id=teacher.id))
         db.session.commit()
         flash('Teacher deleted.', 'success')
     return redirect(url_for('admin.teachers'))

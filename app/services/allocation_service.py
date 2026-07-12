@@ -90,6 +90,29 @@ class AllocationService:
                 .all())
 
     @staticmethod
+    def get_subjects_for_teacher(teacher_id):
+        """Return Subject objects a teacher is assigned to teach."""
+        return (Subject.query
+                .filter_by(teacher_id=teacher_id)
+                .order_by(Subject.sort_order, Subject.name)
+                .all())
+
+    @staticmethod
+    def get_students_for_teacher(teacher_id):
+        """Return every student enrolled in any subject taught by this
+        teacher, deduplicated, ordered by name. This is the enforcement
+        boundary for "list my students" — it can never include a student
+        from a subject this teacher does not teach."""
+        from app.models.user import User
+        return (db.session.query(User)
+                .join(Enrollment, Enrollment.student_id == User.id)
+                .join(Subject, Subject.id == Enrollment.subject_id)
+                .filter(Subject.teacher_id == teacher_id)
+                .distinct()
+                .order_by(User.full_name)
+                .all())
+
+    @staticmethod
     def promote_student(student):
         """Advance a student's semester_id to the next Semester (by number) in the
         same batch. Returns (success, message)."""

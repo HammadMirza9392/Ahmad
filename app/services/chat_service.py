@@ -108,11 +108,18 @@ class ChatService:
         return [{'role': m.role, 'content': m.content} for m in messages]
 
     @staticmethod
-    def feedback_message(message_id, is_liked):
+    def feedback_message(message_id, is_liked, user_id=None):
+        """Record thumbs up/down on a message. When `user_id` is given, only
+        applies if the message's session belongs to that user."""
         msg = db.session.get(ChatMessage, message_id)
-        if msg:
-            msg.is_liked = is_liked
-            db.session.commit()
+        if not msg:
+            return None
+        if user_id is not None:
+            session = db.session.get(ChatSession, msg.session_id)
+            if not session or session.user_id != user_id:
+                return None
+        msg.is_liked = is_liked
+        db.session.commit()
         return msg
 
     # ───────────── ADMIN ─────────────

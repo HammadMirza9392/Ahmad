@@ -22,11 +22,11 @@ class User(UserMixin, db.Model):
     roll_number = db.Column(db.String(50), index=True)
     registration_number = db.Column(db.String(50), index=True)
 
-    # Academic context (for students)
-    department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
-    program_id = db.Column(db.Integer, db.ForeignKey('programs.id'))
-    batch_id = db.Column(db.Integer, db.ForeignKey('batches.id'))
-    semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id'))
+    # Academic context (for students and department-scoped teachers/HODs)
+    department_id = db.Column(db.Integer, db.ForeignKey('departments.id', ondelete='CASCADE'))
+    program_id = db.Column(db.Integer, db.ForeignKey('programs.id', ondelete='CASCADE'))
+    batch_id = db.Column(db.Integer, db.ForeignKey('batches.id', ondelete='CASCADE'))
+    semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id', ondelete='CASCADE'))
     semester = db.Column(db.String(20))  # legacy free-text field, superseded by semester_id
 
     # Status
@@ -41,12 +41,17 @@ class User(UserMixin, db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
+    # NOTE: no ORM-level delete-orphan cascade on department/program/student_batch/student_semester —
+    # students are routinely reassigned between these (see StudentService.update), and delete-orphan
+    # would delete the User the moment it's disassociated from its current parent, not just when the
+    # parent itself is deleted. Deleting the parent is instead handled at the DB level via the
+    # ondelete='CASCADE' on each FK column above.
     department = db.relationship('Department', foreign_keys=[department_id], backref='students', lazy=True)
     program = db.relationship('Program', backref='students', lazy=True)
     student_batch = db.relationship('Batch', backref='students', lazy=True)
     student_semester = db.relationship('Semester', backref='students', lazy=True)
-    chat_sessions = db.relationship('ChatSession', backref='user', lazy='dynamic')
-    notifications = db.relationship('UserNotification', backref='user', lazy='dynamic')
+    chat_sessions = db.relationship('ChatSession', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    notifications = db.relationship('UserNotification', backref='user', lazy='dynamic', cascade='all, delete-orphan')
 
     def is_admin(self):
         return self.role in ('super_admin', 'admin')

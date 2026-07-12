@@ -16,7 +16,7 @@ from app.services.allocation_service import AllocationService
 from app.services.quiz_service import QuizService
 from app.services.audit_service import AuditService
 from app.models.user import User
-from app.models.subject import Subject
+from app.utils.cascade import cascade_delete_users
 
 hod_bp = Blueprint('hod', __name__)
 
@@ -118,7 +118,7 @@ def teacher_delete(teacher_id):
     if teacher and teacher.role == 'teacher':
         require_department_scope(teacher.department_id)
         AuditService.log(current_user.id, 'delete_teacher', 'user', teacher.id, request.remote_addr)
-        db.session.delete(teacher)
+        cascade_delete_users(User.query.filter_by(id=teacher.id))
         db.session.commit()
         flash('Teacher deleted.', 'success')
     return redirect(url_for('hod.teachers'))

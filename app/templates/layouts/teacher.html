@@ -32,6 +32,11 @@
 
         <div class="sidebar-section">Teaching</div>
         <div class="nav-item">
+            <a href="{{ url_for('teacher.chat') }}" class="nav-link {% if 'chat' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-chat-dots-fill"></i> AI Assistant
+            </a>
+        </div>
+        <div class="nav-item">
             <a href="{{ url_for('teacher.quizzes') }}" class="nav-link {% if 'quiz' in request.endpoint or 'attempt' in request.endpoint %}active{% endif %}">
                 <i class="bi bi-patch-question"></i> Quizzes
             </a>

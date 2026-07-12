@@ -52,6 +52,9 @@
                         <label for="program_id" class="form-label">Program</label>
                         <select class="form-select" id="program_id" name="program_id">
                             <option value="">-- Select Program --</option>
+                            {% if kb.program %}
+                            <option value="{{ kb.program.id }}" selected>{{ kb.program.name }}</option>
+                            {% endif %}
                         </select>
                     </div>
 
@@ -79,6 +82,9 @@
                         <label for="subject_id" class="form-label">Subject</label>
                         <select class="form-select" id="subject_id" name="subject_id">
                             <option value="">-- Select Subject --</option>
+                            {% if kb.subject %}
+                            <option value="{{ kb.subject.id }}" selected>{{ kb.subject.name }}</option>
+                            {% endif %}
                         </select>
                     </div>
 
@@ -179,19 +185,47 @@
 {% block scripts %}
 {{ super() }}
 <script>
-document.getElementById('department_id').addEventListener('change', function () {
-    loadPrograms(this.value, document.getElementById('program_id'), function () {
-        document.getElementById('batch_id').innerHTML = '<option value="">-- Select Batch --</option>';
-        document.getElementById('semester_id').innerHTML = '<option value="">-- Select Semester --</option>';
+const departmentSelect = document.getElementById('department_id');
+const programSelect = document.getElementById('program_id');
+const batchSelect = document.getElementById('batch_id');
+const semesterSelect = document.getElementById('semester_id');
+const subjectSelect = document.getElementById('subject_id');
+
+const currentProgramId = {{ kb.program_id or 'null' }};
+const currentBatchId = {{ kb.batch_id or 'null' }};
+const currentSemesterId = {{ kb.semester_id or 'null' }};
+const currentSubjectId = {{ kb.subject_id or 'null' }};
+
+departmentSelect.addEventListener('change', function () {
+    loadPrograms(this.value, programSelect, function () {
+        batchSelect.innerHTML = '<option value="">-- Select Batch --</option>';
+        semesterSelect.innerHTML = '<option value="">-- Select Semester --</option>';
+    });
+    loadSubjects(this.value, subjectSelect);
+});
+programSelect.addEventListener('change', function () {
+    loadBatches(this.value, batchSelect, function () {
+        semesterSelect.innerHTML = '<option value="">-- Select Semester --</option>';
     });
 });
-document.getElementById('program_id').addEventListener('change', function () {
-    loadBatches(this.value, document.getElementById('batch_id'), function () {
-        document.getElementById('semester_id').innerHTML = '<option value="">-- Select Semester --</option>';
-    });
+batchSelect.addEventListener('change', function () {
+    loadSemesters(this.value, semesterSelect);
 });
-document.getElementById('batch_id').addEventListener('change', function () {
-    loadSemesters(this.value, document.getElementById('semester_id'));
-});
+
+// On load, populate every dropdown beneath an already-selected department/
+// program/batch with its full option list, preserving the entry's current
+// scope instead of leaving downstream selects empty.
+if (departmentSelect.value) {
+    loadPrograms(departmentSelect.value, programSelect, function () {
+        if (programSelect.value) {
+            loadBatches(programSelect.value, batchSelect, function () {
+                if (batchSelect.value) {
+                    loadSemesters(batchSelect.value, semesterSelect, null, currentSemesterId);
+                }
+            }, currentBatchId);
+        }
+    }, currentProgramId);
+    loadSubjects(departmentSelect.value, subjectSelect, currentSubjectId);
+}
 </script>
 {% endblock %}

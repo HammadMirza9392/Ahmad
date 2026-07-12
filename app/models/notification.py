@@ -16,14 +16,14 @@ class Notification(db.Model):
 
     # Targeting
     target_type = db.Column(db.String(50), default='all')  # all, department, batch, semester
-    department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
-    batch_id = db.Column(db.Integer, db.ForeignKey('batches.id'))
-    semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id'))
+    department_id = db.Column(db.Integer, db.ForeignKey('departments.id', ondelete='SET NULL'))
+    batch_id = db.Column(db.Integer, db.ForeignKey('batches.id', ondelete='SET NULL'))
+    semester_id = db.Column(db.Integer, db.ForeignKey('semesters.id', ondelete='SET NULL'))
 
     is_active = db.Column(db.Boolean, default=True)
     priority = db.Column(db.String(20), default='normal')  # low, normal, high, urgent
 
-    created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     expires_at = db.Column(db.DateTime)
 
@@ -41,8 +41,8 @@ class UserNotification(db.Model):
     __tablename__ = 'user_notifications'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    notification_id = db.Column(db.Integer, db.ForeignKey('notifications.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    notification_id = db.Column(db.Integer, db.ForeignKey('notifications.id', ondelete='CASCADE'), nullable=False)
     is_read = db.Column(db.Boolean, default=False)
     read_at = db.Column(db.DateTime)
 

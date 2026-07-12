@@ -16,7 +16,7 @@ class Batch(db.Model):
     end_year = db.Column(db.Integer)
     status = db.Column(db.String(20), default='active')  # upcoming, active, completed
 
-    program_id = db.Column(db.Integer, db.ForeignKey('programs.id'), nullable=False)
+    program_id = db.Column(db.Integer, db.ForeignKey('programs.id', ondelete='CASCADE'), nullable=False)
 
     is_active = db.Column(db.Boolean, default=True)
     sort_order = db.Column(db.Integer, default=0)
@@ -25,7 +25,11 @@ class Batch(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    semesters = db.relationship('Semester', backref='batch', lazy=True, cascade='all, delete-orphan')
+    # NOTE: no ORM-level delete-orphan cascade — semesters can be reassigned to a different batch
+    # (see DepartmentService.update_semester), and delete-orphan would delete the Semester the
+    # moment it's disassociated from its current batch. Deleting the batch itself is instead
+    # handled at the DB level via semesters.batch_id's ondelete='CASCADE'.
+    semesters = db.relationship('Semester', backref='batch', lazy=True)
 
     @property
     def label(self):

@@ -14,7 +14,7 @@ class GalleryAlbum(db.Model):
     description = db.Column(db.Text)
     cover_image = db.Column(db.String(500))
 
-    department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
+    department_id = db.Column(db.Integer, db.ForeignKey('departments.id', ondelete='SET NULL'))
 
     is_active = db.Column(db.Boolean, default=True)
     sort_order = db.Column(db.Integer, default=0)
@@ -34,7 +34,7 @@ class GalleryImage(db.Model):
     __tablename__ = 'gallery_images'
 
     id = db.Column(db.Integer, primary_key=True)
-    album_id = db.Column(db.Integer, db.ForeignKey('gallery_albums.id'), nullable=False)
+    album_id = db.Column(db.Integer, db.ForeignKey('gallery_albums.id', ondelete='CASCADE'), nullable=False)
     title = db.Column(db.String(500))
     image = db.Column(db.String(500), nullable=False)
     sort_order = db.Column(db.Integer, default=0)

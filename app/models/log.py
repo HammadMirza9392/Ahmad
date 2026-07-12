@@ -10,7 +10,7 @@ class AuditLog(db.Model):
     __tablename__ = 'audit_logs'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
     action = db.Column(db.String(255), nullable=False)  # login, logout, create, update, delete, export, etc.
     resource_type = db.Column(db.String(100))  # user, department, knowledge, etc.
     resource_id = db.Column(db.Integer)

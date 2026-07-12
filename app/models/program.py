@@ -17,7 +17,7 @@ class Program(db.Model):
     total_semesters = db.Column(db.Integer)  # authoritative semester count, e.g. 8
     degree_type = db.Column(db.String(100))  # Intermediate, Bachelor, Master
 
-    department_id = db.Column(db.Integer, db.ForeignKey('departments.id'), nullable=False)
+    department_id = db.Column(db.Integer, db.ForeignKey('departments.id', ondelete='CASCADE'), nullable=False)
 
     is_active = db.Column(db.Boolean, default=True)
     sort_order = db.Column(db.Integer, default=0)
@@ -26,7 +26,11 @@ class Program(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    batches = db.relationship('Batch', backref='program', lazy=True, cascade='all, delete-orphan')
+    # NOTE: no ORM-level delete-orphan cascade — batches can be reassigned to a different program
+    # (see DepartmentService.update_batch), and delete-orphan would delete the Batch the moment
+    # it's disassociated from its current program. Deleting the program itself is instead handled
+    # at the DB level via batches.program_id's ondelete='CASCADE'.
+    batches = db.relationship('Batch', backref='program', lazy=True)
 
     def __repr__(self):
         return f'<Program {self.name}>'

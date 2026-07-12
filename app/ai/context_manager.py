@@ -30,6 +30,29 @@ def _get_student_assignments(user_id):
         return []
 
 
+def _build_teacher_context(teacher_id):
+    """Fetch everything a teacher's AI chat is allowed to see: only the
+    subjects assigned to them (Subject.teacher_id == teacher_id) and the
+    students enrolled in those subjects. This is the enforcement boundary —
+    no other subject or student is ever passed into the prompt."""
+    from app.services.allocation_service import AllocationService
+    from app.services.knowledge_service import KnowledgeService
+    from app.models.quiz import Quiz
+
+    subjects = AllocationService.get_subjects_for_teacher(teacher_id)
+    subject_ids = [s.id for s in subjects]
+
+    students_by_subject = {
+        s.id: AllocationService.get_students_for_subject(s.id) for s in subjects
+    }
+
+    knowledge_context, resource_files = KnowledgeService.get_context_for_subjects(subject_ids)
+
+    quizzes = (Quiz.query.filter_by(teacher_id=teacher_id).all() if subject_ids else [])
+
+    return subjects, students_by_subject, knowledge_context, resource_files, quizzes
+
+
 class ContextManager:
 
     @staticmethod
@@ -206,3 +229,147 @@ class ContextManager:
             ua=user_agent,
         )
         AnalyticsService.track_question(user_message, dept_id, subject_id)
+
+    @staticmethod
+    def process_teacher_message(user, session_id, user_message, ip_address=None, user_agent=None):
+        """Full AI pipeline for a teacher chat: scope to the teacher's own
+        subjects/students only, build prompt, call AI, save, return response."""
+        subjects, students_by_subject, knowledge_context, resource_files, quizzes = (
+            _build_teacher_context(user.id)
+        )
+
+        provider_instance = get_provider()
+        from app.models.ai_settings import AIProvider
+        primary = AIProvider.query.filter_by(is_primary=True, is_active=True).first()
+        custom_prompt = primary.default_prompt if primary else None
+
+        system_prompt = PromptBuilder.build_teacher_system_prompt(
+            user=user,
+            subjects=subjects,
+            students_by_subject=students_by_subject,
+            knowledge_context=knowledge_context,
+            resource_files=resource_files,
+            custom_prompt=custom_prompt,
+            quizzes=quizzes,
+        )
+
+        ChatService.add_message(
+            session_id=session_id, role='user', content=user_message,
+            ip_address=ip_address, user_agent=user_agent,
+        )
+        history = ChatService.get_conversation_history(session_id, limit=20)
+
+        start_time = time.time()
+        try:
+            response_text, metadata = provider_instance.generate(history, system_prompt)
+        except Exception as e:
+            logger.warning(f'Primary provider failed: {e}. Trying backup.')
+            backup = get_backup_provider()
+            if backup:
+                response_text, metadata = backup.generate(history, system_prompt)
+            else:
+                raise RuntimeError(f'AI provider error: {e}')
+
+        response_time_ms = int((time.time() - start_time) * 1000)
+
+        ChatService.add_message(
+            session_id=session_id,
+            role='assistant',
+            content=response_text,
+            provider_used=metadata.get('provider'),
+            model_used=metadata.get('model'),
+            response_time_ms=response_time_ms,
+            tokens_used=metadata.get('tokens'),
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+
+        AnalyticsService.track(
+            event_type='chat',
+            user_id=user.id,
+            department_id=user.department_id,
+            subject_id=None,
+            event_data={'response_time_ms': response_time_ms, 'role': 'teacher'},
+            ip=ip_address,
+            ua=user_agent,
+        )
+
+        metadata['response_time_ms'] = response_time_ms
+        metadata['resource_files'] = resource_files
+        return response_text, metadata
+
+    @staticmethod
+    def process_teacher_message_stream(user, session_id, user_message, ip_address=None, user_agent=None):
+        """Streaming version of the teacher AI pipeline."""
+        user_id = user.id
+        dept_id = user.department_id
+
+        subjects, students_by_subject, knowledge_context, resource_files, quizzes = (
+            _build_teacher_context(user_id)
+        )
+
+        provider_instance = get_provider()
+        from app.models.ai_settings import AIProvider
+        primary = AIProvider.query.filter_by(is_primary=True, is_active=True).first()
+        custom_prompt = primary.default_prompt if primary else None
+        provider_slug = primary.slug if primary else 'unknown'
+        model_name = primary.model_name if primary else 'unknown'
+
+        system_prompt = PromptBuilder.build_teacher_system_prompt(
+            user=user,
+            subjects=subjects,
+            students_by_subject=students_by_subject,
+            knowledge_context=knowledge_context,
+            resource_files=resource_files,
+            custom_prompt=custom_prompt,
+            quizzes=quizzes,
+        )
+
+        ChatService.add_message(
+            session_id=session_id, role='user', content=user_message,
+            ip_address=ip_address, user_agent=user_agent,
+        )
+        history = ChatService.get_conversation_history(session_id, limit=20)
+
+        start_time = time.time()
+        full_response = []
+
+        try:
+            for chunk in provider_instance.generate_stream(history, system_prompt):
+                full_response.append(chunk)
+                yield chunk
+        except Exception as e:
+            logger.warning(f'Streaming primary failed: {e}. Trying backup.')
+            backup = get_backup_provider()
+            if backup:
+                for chunk in backup.generate_stream(history, system_prompt):
+                    full_response.append(chunk)
+                    yield chunk
+            else:
+                error_msg = 'AI service is temporarily unavailable. Please try again.'
+                full_response.append(error_msg)
+                yield error_msg
+
+        response_time_ms = int((time.time() - start_time) * 1000)
+        complete_text = ''.join(full_response)
+
+        ChatService.add_message(
+            session_id=session_id,
+            role='assistant',
+            content=complete_text,
+            provider_used=provider_slug,
+            model_used=model_name,
+            response_time_ms=response_time_ms,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+
+        AnalyticsService.track(
+            event_type='chat',
+            user_id=user_id,
+            department_id=dept_id,
+            subject_id=None,
+            event_data={'response_time_ms': response_time_ms, 'streaming': True, 'role': 'teacher'},
+            ip=ip_address,
+            ua=user_agent,
+        )

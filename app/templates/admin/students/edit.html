@@ -154,14 +154,38 @@
 
 {% block scripts %}
 <script>
-document.getElementById('department_id').addEventListener('change', function () {
-    loadPrograms(this.value, document.getElementById('program_id'));
+const departmentSelect = document.getElementById('department_id');
+const programSelect = document.getElementById('program_id');
+const batchSelect = document.getElementById('batch_id');
+const semesterSelect = document.getElementById('semester_id');
+
+const currentProgramId = {{ student.program_id or 'null' }};
+const currentBatchId = {{ student.batch_id or 'null' }};
+const currentSemesterId = {{ student.semester_id or 'null' }};
+
+departmentSelect.addEventListener('change', function () {
+    loadPrograms(this.value, programSelect);
 });
-document.getElementById('program_id').addEventListener('change', function () {
-    loadBatches(this.value, document.getElementById('batch_id'));
+programSelect.addEventListener('change', function () {
+    loadBatches(this.value, batchSelect);
 });
-document.getElementById('batch_id').addEventListener('change', function () {
-    loadSemesters(this.value, document.getElementById('semester_id'));
+batchSelect.addEventListener('change', function () {
+    loadSemesters(this.value, semesterSelect);
 });
+
+// On load, if a department/program/batch is already selected, populate every
+// dropdown beneath it with the full option list (not just the single
+// hard-coded pre-selected option), preserving the student's current values.
+if (departmentSelect.value) {
+    loadPrograms(departmentSelect.value, programSelect, function () {
+        if (programSelect.value) {
+            loadBatches(programSelect.value, batchSelect, function () {
+                if (batchSelect.value) {
+                    loadSemesters(batchSelect.value, semesterSelect, null, currentSemesterId);
+                }
+            }, currentBatchId);
+        }
+    }, currentProgramId);
+}
 </script>
 {% endblock %}

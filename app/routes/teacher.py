@@ -1,9 +1,10 @@
 """
 Teacher Routes
-Subject-scoped tools for teachers: quizzes, materials, announcements, marks.
+Subject-scoped tools for teachers: quizzes, materials, announcements, marks, AI chat.
 Every handler re-derives ownership from the DB record.
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
+from flask import (Blueprint, render_template, request, redirect, url_for, flash, abort,
+                    jsonify, Response, stream_with_context)
 from flask_login import login_required, current_user
 
 from app import db
@@ -11,6 +12,8 @@ from app.utils.decorators import teacher_required
 from app.utils.scoping import require_subject_ownership
 from app.services.quiz_service import QuizService
 from app.services.allocation_service import AllocationService
+from app.services.chat_service import ChatService
+from app.controllers.teacher_controller import TeacherController
 from app.utils.file_handler import save_upload
 from app.models.subject import Subject
 from app.models.quiz import QuizAnswer
@@ -23,6 +26,142 @@ teacher_bp = Blueprint('teacher', __name__)
 
 def _my_subjects():
     return Subject.query.filter_by(teacher_id=current_user.id).order_by(Subject.name).all()
+
+
+def _parse_int(val):
+    """Safely parse an integer from form/JSON data."""
+    if val is None or val == '' or val == 'null':
+        return None
+    try:
+        return int(val)
+    except (ValueError, TypeError):
+        return None
+
+
+# ───────────── AI CHAT ─────────────
+
+@teacher_bp.route('/chat')
+@teacher_bp.route('/chat/<int:session_id>')
+@login_required
+@teacher_required
+def chat(session_id=None):
+    sessions = ChatService.get_user_sessions(current_user.id)
+    messages = []
+    current_session = None
+    if session_id:
+        current_session = ChatService.get_session(session_id, current_user.id)
+        if current_session:
+            messages = ChatService.get_messages(session_id)
+    return render_template('teacher/chat/index.html',
+                           sessions=sessions, messages=messages, current_session=current_session)
+
+
+@teacher_bp.route('/chat/new', methods=['POST'])
+@login_required
+@teacher_required
+def chat_new():
+    session = ChatService.create_session(
+        user_id=current_user.id,
+        department_id=current_user.department_id,
+    )
+    return redirect(url_for('teacher.chat', session_id=session.id))
+
+
+@teacher_bp.route('/chat/send', methods=['POST'])
+@login_required
+@teacher_required
+def chat_send():
+    data = request.get_json()
+    session_id = _parse_int(data.get('session_id'))
+    message = data.get('message', '').strip()
+
+    if not session_id or not message:
+        return jsonify({'error': 'Missing session or message'}), 400
+    if not ChatService.get_session(session_id, current_user.id):
+        return jsonify({'error': 'Chat session not found'}), 404
+
+    try:
+        response_text, metadata = TeacherController.send_message(
+            session_id, message,
+            user=current_user._get_current_object(),
+            ip=request.remote_addr, ua=request.user_agent.string,
+        )
+        return jsonify({
+            'response': response_text,
+            'provider': metadata.get('provider'),
+            'response_time_ms': metadata.get('response_time_ms'),
+            'resource_files': metadata.get('resource_files', []),
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@teacher_bp.route('/chat/stream', methods=['POST'])
+@login_required
+@teacher_required
+def chat_stream():
+    data = request.get_json()
+    session_id = _parse_int(data.get('session_id'))
+    message = data.get('message', '').strip()
+
+    if not session_id or not message:
+        return jsonify({'error': 'Missing data'}), 400
+    if not ChatService.get_session(session_id, current_user.id):
+        return jsonify({'error': 'Chat session not found'}), 404
+
+    user = current_user._get_current_object()
+    ip = request.remote_addr
+    ua = request.user_agent.string
+
+    def generate():
+        try:
+            from app.ai.context_manager import ContextManager
+            for chunk in ContextManager.process_teacher_message_stream(
+                user=user, session_id=session_id, user_message=message,
+                ip_address=ip, user_agent=ua,
+            ):
+                yield f"data: {chunk}\n\n"
+            yield "data: [DONE]\n\n"
+        except Exception as e:
+            yield f"data: Error: {str(e)}\n\n"
+
+    return Response(stream_with_context(generate()), mimetype='text/event-stream')
+
+
+@teacher_bp.route('/chat/rename', methods=['POST'])
+@login_required
+@teacher_required
+def chat_rename():
+    data = request.get_json()
+    ChatService.rename_session(data.get('session_id'), current_user.id, data.get('title', 'Untitled'))
+    return jsonify({'status': 'ok'})
+
+
+@teacher_bp.route('/chat/bookmark', methods=['POST'])
+@login_required
+@teacher_required
+def chat_bookmark():
+    data = request.get_json()
+    ChatService.toggle_bookmark(data.get('session_id'), current_user.id)
+    return jsonify({'status': 'ok'})
+
+
+@teacher_bp.route('/chat/delete/<int:session_id>', methods=['POST'])
+@login_required
+@teacher_required
+def chat_delete(session_id):
+    ChatService.delete_session(session_id, current_user.id)
+    flash('Chat deleted.', 'info')
+    return redirect(url_for('teacher.chat'))
+
+
+@teacher_bp.route('/chat/feedback', methods=['POST'])
+@login_required
+@teacher_required
+def chat_feedback():
+    data = request.get_json()
+    ChatService.feedback_message(data.get('message_id'), data.get('is_liked'), user_id=current_user.id)
+    return jsonify({'status': 'ok'})
 
 
 # ───────────── DASHBOARD ─────────────
