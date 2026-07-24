@@ -52,7 +52,7 @@
                     <label for="logo" class="form-label">Logo</label>
                     {% if inst.logo %}
                     <div class="mb-2">
-                        <img src="{{ url_for('static', filename='uploads/' + inst.logo) }}" alt="Current Logo" class="img-thumbnail" style="max-height: 80px;">
+                        <img src="{{ inst.logo }}" alt="Current Logo" class="img-thumbnail" style="max-height: 80px;">
                         <small class="d-block text-muted mt-1">Current logo</small>
                     </div>
                     {% endif %}
@@ -62,7 +62,7 @@
                     <label for="banner" class="form-label">Banner Image</label>
                     {% if inst.banner %}
                     <div class="mb-2">
-                        <img src="{{ url_for('static', filename='uploads/' + inst.banner) }}" alt="Current Banner" class="img-thumbnail" style="max-height: 80px;">
+                        <img src="{{ inst.banner }}" alt="Current Banner" class="img-thumbnail" style="max-height: 80px;">
                         <small class="d-block text-muted mt-1">Current banner</small>
                     </div>
                     {% endif %}
@@ -72,7 +72,7 @@
                     <label for="favicon" class="form-label">Favicon</label>
                     {% if inst.favicon %}
                     <div class="mb-2">
-                        <img src="{{ url_for('static', filename='uploads/' + inst.favicon) }}" alt="Current Favicon" class="img-thumbnail" style="max-height: 40px;">
+                        <img src="{{ inst.favicon }}" alt="Current Favicon" class="img-thumbnail" style="max-height: 40px;">
                         <small class="d-block text-muted mt-1">Current favicon</small>
                     </div>
                     {% endif %}

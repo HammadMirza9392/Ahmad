@@ -42,8 +42,8 @@
                         <label for="category" class="form-label">Category</label>
                         <select class="form-select" id="category" name="category">
                             <option value="">-- Select Category --</option>
-                            {% for cat in categories %}
-                            <option value="{{ cat }}">{{ cat }}</option>
+                            {% for value, label in categories %}
+                            <option value="{{ value }}">{{ label }}</option>
                             {% endfor %}
                         </select>
                     </div>

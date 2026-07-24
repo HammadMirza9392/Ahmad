@@ -20,10 +20,10 @@
                class="btn btn-sm {{ 'btn-primary' if not request.args.get('category') else 'btn-outline-secondary' }}">
                 All
             </a>
-            {% for cat in categories %}
-            <a href="{{ url_for('student.downloads', category=cat) }}"
-               class="btn btn-sm {{ 'btn-primary' if request.args.get('category') == cat else 'btn-outline-secondary' }}">
-                {{ cat|capitalize }}
+            {% for value, label in categories %}
+            <a href="{{ url_for('student.downloads', category=value) }}"
+               class="btn btn-sm {{ 'btn-primary' if request.args.get('category') == value else 'btn-outline-secondary' }}">
+                {{ label }}
             </a>
             {% endfor %}
         </div>
