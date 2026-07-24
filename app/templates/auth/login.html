@@ -5,8 +5,8 @@
 {% block body %}
 <div class="login-wrapper">
     <div class="login-card">
-        {% if theme and theme.logo_url %}
-        <img src="{{ theme.logo_url }}" alt="Logo" class="logo">
+        {% if theme_logo_url %}
+        <img src="{{ theme_logo_url }}" alt="Logo" class="logo">
         {% elif institution and institution.logo %}
         <img src="{{ institution.logo }}" alt="Logo" class="logo">
         {% else %}

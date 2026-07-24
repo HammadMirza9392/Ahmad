@@ -7,8 +7,8 @@
 <!-- Sidebar -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-        {% if theme and theme.logo_url %}
-        <img src="{{ theme.logo_url }}" alt="Logo">
+        {% if theme_logo_url %}
+        <img src="{{ theme_logo_url }}" alt="Logo">
         {% elif institution and institution.logo %}
         <img src="{{ institution.logo }}" alt="Logo">
         {% else %}

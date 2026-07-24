@@ -78,9 +78,12 @@ def create_app(config_name='development'):
             theme = ThemeService.get_active_theme()
         except Exception:
             theme = None
+        from app.services.theme_service import ThemeService
+        theme_logo_url = ThemeService.get_display_logo_url(theme) if theme else None
         return dict(
             institution=institution,
             theme=theme,
+            theme_logo_url=theme_logo_url,
             now=datetime.utcnow,
         )
 
