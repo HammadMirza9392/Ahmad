@@ -91,9 +91,6 @@
             <h6 class="mb-0 fw-bold d-none d-md-block">{% block page_title %}Dashboard{% endblock %}</h6>
         </div>
         <div class="topbar-actions">
-            <button class="btn-icon" id="themeToggle" title="Toggle Dark Mode">
-                <i class="bi bi-moon"></i>
-            </button>
             <a href="{{ url_for('student.notifications') }}" class="btn-icon" title="Notifications">
                 <i class="bi bi-bell"></i>
                 {% if unread_count is defined and unread_count > 0 %}

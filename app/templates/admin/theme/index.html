@@ -104,14 +104,6 @@
                             </select>
                             <div class="form-text">Paragraphs, tables, form labels.</div>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Mode</label>
-                            <select class="form-select" name="mode">
-                                {% for m in ['light','dark','auto'] %}
-                                <option value="{{ m }}" {% if theme.mode == m %}selected{% endif %}>{{ m|capitalize }}</option>{% endfor %}
-                            </select>
-                            <div class="form-text">Default appearance for dashboards.</div>
-                        </div>
                     </div>
                 </div>
             </div>

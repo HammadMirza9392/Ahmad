@@ -1,6 +1,6 @@
 /**
  * AI Powered LMS — Core JavaScript
- * Handles theme toggle, global search, CSRF tokens, dynamic forms, notifications.
+ * Handles global search, CSRF tokens, dynamic forms, notifications.
  */
 
 // ── CSRF Token for AJAX ──
@@ -13,27 +13,11 @@ function ajaxHeaders() {
     };
 }
 
-// ── Theme Toggle ──
+// ── Theme Lock ──
 (function initTheme() {
-    const saved = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', saved);
-    updateThemeIcon(saved);
+    localStorage.removeItem('theme');
+    document.documentElement.setAttribute('data-theme', 'light');
 })();
-
-document.getElementById('themeToggle')?.addEventListener('click', function () {
-    const current = document.documentElement.getAttribute('data-theme');
-    const next = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
-    updateThemeIcon(next);
-});
-
-function updateThemeIcon(theme) {
-    const icon = document.querySelector('#themeToggle i');
-    if (icon) {
-        icon.className = theme === 'dark' ? 'bi bi-sun' : 'bi bi-moon';
-    }
-}
 
 // ── Global Search ──
 const searchInput = document.getElementById('globalSearch');
